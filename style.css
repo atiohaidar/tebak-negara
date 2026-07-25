@@ -332,6 +332,19 @@ body, html {
   justify-content: center;
   overflow: hidden;
   margin-bottom: 12px;
+  position: relative;
+}
+
+/* CRT Scanline overlay effect */
+.flag-container::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 3px;
+  pointer-events: none;
+  z-index: 5;
 }
 
 .flag-image {
@@ -380,30 +393,55 @@ body, html {
   50% { background-color: #800000; color: white; border-color: red; }
 }
 
-/* Info board */
-.game-info {
+/* Minesweeper Header Styles */
+.minesweeper-header {
+  background-color: var(--win-bg);
+  padding: 5px 8px;
   display: flex;
   justify-content: space-between;
-  width: 100%;
-  margin-bottom: 10px;
+  align-items: center;
+  margin-bottom: 8px;
 }
 
-.info-box {
-  flex: 1;
+.lcd-display {
+  background-color: #000000;
+  color: #ff0000;
+  font-family: 'VT323', Courier, monospace;
+  font-size: 26px;
+  padding: 2px 6px;
+  border: 2px solid;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  text-shadow: 0 0 4px rgba(255, 0, 0, 0.7);
+  letter-spacing: 1px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
   text-align: center;
-  font-weight: bold;
-  padding: 4px;
-  font-size: 12px;
-  background: #f0f0f0;
+  box-sizing: border-box;
 }
 
-.info-box:not(:last-child) {
-  margin-right: 6px;
+.smiley-btn {
+  width: 26px !important;
+  height: 26px !important;
+  font-size: 16px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0 !important;
+  margin: 0 5px;
+}
+
+.smiley-btn:active {
+  padding: 1px 0 0 1px !important;
 }
 
 .lives-container {
-  color: #c00;
-  letter-spacing: 2px;
+  color: #ff0000;
+  letter-spacing: 1px;
+  font-size: 14px;
 }
 
 /* Clippy Assistant Elements */

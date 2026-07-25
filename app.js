@@ -354,6 +354,7 @@ function nextQuestion() {
   
   gameState.answered = false;
   gameState.askedForHint = false;
+  setSmileyFace("🙂"); // Reset Minesweeper smiley back to normal
   transitionInputUI();
   updateGameUI(); // Sync HUD state
   
@@ -443,6 +444,7 @@ function selectOption(countryCode, buttonElement) {
   
   if (countryCode === targetCode) {
     // Correct Choice
+    setSmileyFace("😎"); // Cool sunglasses smiley
     buttonElement.classList.add("btn-correct");
     AudioSynth.playCorrect();
     
@@ -474,6 +476,7 @@ function selectOption(countryCode, buttonElement) {
     
   } else {
     // Wrong Choice
+    setSmileyFace("🙁"); // Sad smiley
     buttonElement.classList.add("btn-wrong");
     AudioSynth.playWrong();
     
@@ -515,14 +518,15 @@ function resetTimer() {
   }
   
   const timerField = document.getElementById("status-time");
-  timerField.textContent = `Timer: ${gameState.timer}s`;
+  timerField.textContent = String(gameState.timer).padStart(3, '0');
   
   gameState.timerInterval = setInterval(() => {
     gameState.timer--;
-    timerField.textContent = `Timer: ${gameState.timer}s`;
+    timerField.textContent = String(gameState.timer).padStart(3, '0');
     
     if (gameState.timer <= 3 && gameState.timer > 0) {
       AudioSynth.beep(880, 0.04); // Warning Beep
+      setSmileyFace("😮"); // Scared/Warning smiley!
     }
     
     if (gameState.timer <= 0) {
@@ -535,6 +539,7 @@ function resetTimer() {
 // TIMEOUT HANDLING
 function handleTimeout() {
   gameState.answered = true;
+  setSmileyFace("🙁"); // Sad smiley on timeout
   updateGameUI(); // Disable hint button immediately
   AudioSynth.playWrong();
   
@@ -586,8 +591,12 @@ function handleTimeout() {
 
 // UPDATE GAME BOARD HUD
 function updateGameUI() {
-  document.getElementById("info-score").textContent = `Score: ${gameState.score}`;
-  document.getElementById("info-level").textContent = `Level: ${gameState.level}`;
+  // Format score padded to 3 digits (Minesweeper LCD style)
+  document.getElementById("info-score").textContent = String(gameState.score).padStart(3, '0');
+  
+  // Format level prepended with L and padded to 2 digits (e.g. L01, L02)
+  document.getElementById("info-level").textContent = `L${String(gameState.level).padStart(2, '0')}`;
+  
   document.getElementById("status-streak").textContent = `Streak: ${gameState.streak}`;
   
   // Heart icons for lives
@@ -613,15 +622,17 @@ function updateGameUI() {
 function triggerGameOver() {
   clearInterval(gameState.timerInterval);
   AudioSynth.playGameOver();
+  setSmileyFace("😵"); // Dead eyes smiley face
   
-  // Display gameover modal shields
-  document.getElementById("dialog-overlay").style.display = "block";
-  document.getElementById("gameover-window").style.display = "flex";
+  // Hide other screens
+  document.getElementById("game-area").style.display = "none";
+  document.getElementById("start-screen").style.display = "none";
+  document.getElementById("highscore-screen").style.display = "none";
+  document.getElementById("about-screen").style.display = "none";
+  
+  // Show gameover screen panel
+  document.getElementById("gameover-screen").style.display = "flex";
   document.getElementById("gameover-final-score").textContent = gameState.score;
-  bringToFront(document.getElementById("gameover-window"));
-  
-  // Reset screen back to Setup
-  resetToSetup();
 }
 
 function submitHighScore() {
@@ -647,8 +658,8 @@ function submitHighScore() {
 }
 
 function closeGameOverDialog() {
-  document.getElementById("dialog-overlay").style.display = "none";
-  document.getElementById("gameover-window").style.display = "none";
+  document.getElementById("gameover-screen").style.display = "none";
+  resetToSetup();
 }
 
 // RENDER HIGH SCORES
@@ -675,11 +686,11 @@ function renderHighscores() {
 }
 
 function clearHighscores() {
-  if (confirm("Apakah Anda yakin ingin menghapus semua skor tinggi?")) {
+  showCustomConfirm("Apakah Anda yakin ingin menghapus semua skor tinggi? Tindakan ini tidak dapat dibatalkan.", () => {
     localStorage.removeItem("tebak_negara_scores");
     renderHighscores();
     AudioSynth.beep(200, 0.1, 'sine');
-  }
+  }, () => {}, "Reset High Scores");
 }
 
 // CLIPPY HINT SYSTEM
@@ -736,6 +747,7 @@ function getHintFromClippy() {
   
   // Decrement hints count
   gameState.hintsLeft--;
+  setSmileyFace("😮"); // Talking clippy surprised face
   updateGameUI();
   
   // Deduct points on Expert Mode
@@ -805,7 +817,7 @@ function setupWindowDragging() {
   const windows = document.querySelectorAll(".window");
   
   windows.forEach(win => {
-    if (win.id === "game-window") return; // Ignore main game window (since it is maximized fullscreen)
+    if (win.id === "game-window" || win.id === "custom-dialog-window") return; // Ignore main and custom dialog
     const titleBar = win.querySelector(".title-bar");
     if (!titleBar) return;
     
@@ -874,6 +886,7 @@ function setTranslate(xPos, yPos, el) {
 function setupZIndexControl() {
   const windows = document.querySelectorAll(".window");
   windows.forEach(win => {
+    if (win.id === "custom-dialog-window") return;
     win.addEventListener("mousedown", () => {
       bringToFront(win);
     });
@@ -885,6 +898,7 @@ function bringToFront(activeWin) {
   
   // Make all windows look inactive
   windows.forEach(win => {
+    if (win.id === "custom-dialog-window") return;
     win.classList.add("inactive");
     win.style.zIndex = "10";
   });
@@ -905,9 +919,27 @@ function bringToFront(activeWin) {
 // WINDOW UI OPERATIONS (Min, Max, Close)
 function openWindow(id) {
   AudioSynth.beep(600, 0.05);
-  const win = document.getElementById(id);
-  win.style.display = "flex";
-  bringToFront(win);
+  
+  if (id === "highscore-window") {
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementById("game-area").style.display = "none";
+    document.getElementById("about-screen").style.display = "none";
+    document.getElementById("gameover-screen").style.display = "none";
+    document.getElementById("highscore-screen").style.display = "flex";
+    renderHighscores();
+  } else if (id === "about-window") {
+    document.getElementById("start-screen").style.display = "none";
+    document.getElementById("game-area").style.display = "none";
+    document.getElementById("highscore-screen").style.display = "none";
+    document.getElementById("gameover-screen").style.display = "none";
+    document.getElementById("about-screen").style.display = "flex";
+  } else {
+    const win = document.getElementById(id);
+    if (win) {
+      win.style.display = "flex";
+      bringToFront(win);
+    }
+  }
   
   // Sync Taskbar icon if it's the game window
   if (id === "game-window") {
@@ -916,13 +948,17 @@ function openWindow(id) {
 }
 
 function closeWindow(id) {
-  const win = document.getElementById(id);
-  win.style.display = "none";
-  
-  // Sync Taskbar icon
-  if (id === "game-window") {
-    document.getElementById("taskbar-game-btn").style.display = "none";
-    clearInterval(gameState.timerInterval);
+  if (id === "highscore-window" || id === "about-window" || id === "gameover-window") {
+    resetToSetup();
+  } else {
+    const win = document.getElementById(id);
+    if (win) win.style.display = "none";
+    
+    // Sync Taskbar icon
+    if (id === "game-window") {
+      document.getElementById("taskbar-game-btn").style.display = "none";
+      clearInterval(gameState.timerInterval);
+    }
   }
 }
 
@@ -951,7 +987,16 @@ function toggleMinimizeFromTaskbar(id) {
 
 // HELP POPUP
 function showHelp() {
-  alert("Petunjuk Permainan Tebak Negara:\n\n1. Sebuah bendera akan ditampilkan pada layar.\n2. Pilih satu dari 4 opsi jawaban di bawahnya.\n3. Anda memiliki waktu terbatas pada setiap giliran.\n4. Kesalahan menjawab mengurangi nyawa (total 3 nyawa).\n5. Setiap 3 jawaban berurutan yang benar (streak) menaikkan Level permainan dan menambah jatah bantuan.\n6. Klik tombol 'Tanya Asisten' jika bingung!");
+  showCustomAlert(
+    "<b>Petunjuk Permainan Tebak Negara:</b><br><br>" +
+    "1. Sebuah bendera akan ditampilkan pada layar.<br>" +
+    "2. Pilih satu dari 4 opsi jawaban, atau ketik nama negaranya/ibukotanya.<br>" +
+    "3. Anda memiliki waktu terbatas pada setiap giliran.<br>" +
+    "4. Kesalahan menjawab mengurangi nyawa (total 3 nyawa).<br>" +
+    "5. Setiap 3 jawaban benar berurutan (streak) menaikkan level & menambah jatah bantuan.<br>" +
+    "6. Klik tombol 'Tanya Asisten' jika bingung!",
+    "Bantuan - Tebak Negara"
+  );
 }
 
 // UTILITIES
@@ -1112,6 +1157,7 @@ function submitTypingAnswer() {
   
   if (isCorrect) {
     // Correct
+    setSmileyFace("😎"); // Sunglasses smiley
     textInput.style.backgroundColor = "#c3e6cb"; // light green
     textInput.style.borderColor = "green";
     AudioSynth.playCorrect();
@@ -1146,6 +1192,7 @@ function submitTypingAnswer() {
     
   } else {
     // Wrong
+    setSmileyFace("🙁"); // Sad face
     textInput.style.backgroundColor = "#f5c6cb"; // light red
     textInput.style.borderColor = "red";
     AudioSynth.playWrong();
@@ -1420,9 +1467,12 @@ function resetToSetup() {
   gameState.answered = false;
   gameState.activeCountry = null;
   
-  // Show setup form, hide game board
+  // Show setup form, hide all other panels
   document.getElementById("start-screen").style.display = "flex";
   document.getElementById("game-area").style.display = "none";
+  document.getElementById("highscore-screen").style.display = "none";
+  document.getElementById("about-screen").style.display = "none";
+  document.getElementById("gameover-screen").style.display = "none";
   
   // Clean choice buttons
   document.getElementById("options-container").innerHTML = `
@@ -1434,9 +1484,85 @@ function resetToSetup() {
   document.getElementById("clippy-hint-btn").setAttribute("disabled", "true");
   
   // Reset HUD elements back to defaults
-  document.getElementById("status-time").textContent = "Timer: --";
+  document.getElementById("status-time").textContent = "000";
   document.getElementById("status-streak").textContent = "Streak: 0";
-  document.getElementById("info-score").textContent = "Score: 0";
-  document.getElementById("info-level").textContent = "Level: 1";
+  document.getElementById("info-score").textContent = "000";
+  document.getElementById("info-level").textContent = "L01";
   document.getElementById("lives-display").textContent = "❤❤❤";
+  setSmileyFace("🙂");
+}
+
+// SMILEY FACE CONTROLLER (Minesweeper-style indicator feedback)
+function setSmileyFace(face) {
+  const smiley = document.getElementById("smiley-reset");
+  if (smiley) {
+    smiley.textContent = face;
+  }
+}
+
+// CUSTOM RETRO DIALOG BOX CONTROLLERS (Replaces native browser alert & confirm)
+function showCustomAlert(message, title = "Tebak Negara") {
+  AudioSynth.beep(880, 0.05); // Play retro warning chime
+  
+  document.getElementById("custom-dialog-title").textContent = title;
+  document.getElementById("custom-dialog-message").innerHTML = message;
+  
+  // Show warning icon, hide question icon
+  document.getElementById("custom-dialog-icon-warning").style.display = "block";
+  document.getElementById("custom-dialog-icon-question").style.display = "none";
+  
+  // Render OK button
+  const btnContainer = document.getElementById("custom-dialog-buttons");
+  btnContainer.innerHTML = `<button class="btn-98" style="min-width: 60px; cursor: pointer;" onclick="closeCustomDialog()">OK</button>`;
+  
+  // Display modal overlay and window
+  document.getElementById("custom-dialog-overlay").style.display = "block";
+  document.getElementById("custom-dialog-window").style.display = "flex";
+}
+
+function showCustomConfirm(message, onConfirm, onCancel, title = "Konfirmasi") {
+  AudioSynth.beep(880, 0.05);
+  
+  document.getElementById("custom-dialog-title").textContent = title;
+  document.getElementById("custom-dialog-message").innerHTML = message;
+  
+  // Hide warning icon, show question icon
+  document.getElementById("custom-dialog-icon-warning").style.display = "none";
+  document.getElementById("custom-dialog-icon-question").style.display = "block";
+  
+  // Render Yes & Cancel buttons
+  const btnContainer = document.getElementById("custom-dialog-buttons");
+  btnContainer.innerHTML = "";
+  
+  const yesBtn = document.createElement("button");
+  yesBtn.className = "btn-98";
+  yesBtn.style.minWidth = "60px";
+  yesBtn.style.cursor = "pointer";
+  yesBtn.textContent = "Ya";
+  yesBtn.onclick = () => {
+    closeCustomDialog();
+    if (onConfirm) onConfirm();
+  };
+  
+  const noBtn = document.createElement("button");
+  noBtn.className = "btn-98";
+  noBtn.style.minWidth = "60px";
+  noBtn.style.cursor = "pointer";
+  noBtn.textContent = "Batal";
+  noBtn.onclick = () => {
+    closeCustomDialog();
+    if (onCancel) onCancel();
+  };
+  
+  btnContainer.appendChild(yesBtn);
+  btnContainer.appendChild(noBtn);
+  
+  // Display modal overlay and window
+  document.getElementById("custom-dialog-overlay").style.display = "block";
+  document.getElementById("custom-dialog-window").style.display = "flex";
+}
+
+function closeCustomDialog() {
+  document.getElementById("custom-dialog-overlay").style.display = "none";
+  document.getElementById("custom-dialog-window").style.display = "none";
 }

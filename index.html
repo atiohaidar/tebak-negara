@@ -8,6 +8,9 @@
     content="Tebak Negara  - Sebuah game tebak bendera negara dengan antarmuka retro Windows  yang klasik.">
   <title>Tebak Negara </title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
 </head>
 
 <body>
@@ -193,13 +196,13 @@
 
       <!-- Active Game Area -->
       <div id="game-area" style="display: none; flex-direction: column; width: 100%; gap: 6px;">
-        <!-- Game Info Display -->
-        <div class="game-info">
-          <div class="info-box win-inset" id="info-score">Score: 0</div>
-          <div class="info-box win-inset" id="info-level">Level: 1</div>
-          <div class="info-box win-inset" id="info-lives">
-            Lives: <span class="lives-container" id="lives-display">❤❤❤</span>
-          </div>
+        <!-- Minesweeper-Style LED Scoreboard Header -->
+        <div class="minesweeper-header win-inset">
+          <div class="lcd-display" id="info-score" title="Score">000</div>
+          <div class="lcd-display" id="lives-display" title="Lives" style="color: #ff0000; font-size: 14px; padding: 0 6px;">❤❤❤</div>
+          <button class="win-btn smiley-btn" id="smiley-reset" onclick="resetToSetup()" title="Reset ke Setup">🙂</button>
+          <div class="lcd-display" id="info-level" title="Level">L01</div>
+          <div class="lcd-display" id="status-time" title="Timer">015</div>
         </div>
 
         <!-- Country Flag Container (Sunken Frame) -->
@@ -240,6 +243,75 @@
           </div>
         </div>
       </div>
+
+      <!-- High Scores Screen Area (Integrated Screen Panel) -->
+      <div id="highscore-screen" style="display: none; flex-direction: column; gap: 8px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 4px;">
+          <h2 style="font-size: 15px; font-weight: bold; margin: 0 0 2px 0; color: #000000;">High Scores - Papan Skor</h2>
+          <p style="font-size: 11px; margin: 0; color: #555;">Daftar skor pemain tebak bendera terbaik:</p>
+        </div>
+        <div style="max-height: 220px; overflow-y: auto; width: 100%;" class="win-inset">
+          <table class="score-table" id="highscore-table">
+            <thead>
+              <tr>
+                <th>Rank</th>
+                <th>Nama</th>
+                <th>Skor</th>
+                <th>Streak</th>
+              </tr>
+            </thead>
+            <tbody id="highscore-body">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 8px; width: 100%;">
+          <button class="btn-98" onclick="clearHighscores()">Reset Papan</button>
+          <button class="btn-98" onclick="resetToSetup()">Kembali</button>
+        </div>
+      </div>
+
+      <!-- About Screen Area (Integrated Screen Panel) -->
+      <div id="about-screen" style="display: none; flex-direction: column; gap: 8px; width: 100%;">
+        <div style="text-align: center; margin-bottom: 4px;">
+          <h2 style="font-size: 15px; font-weight: bold; margin: 0 0 2px 0; color: #000000;">Tentang Game</h2>
+        </div>
+        <div class="win-inset" style="background: #ffffff; padding: 12px; display: flex; gap: 12px; align-items: flex-start; box-sizing: border-box;">
+          <div style="width: 32px; height: 32px; flex-shrink: 0;">
+            <!-- Retro Info SVG -->
+            <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="14" fill="#000080" stroke="#000" stroke-width="1.5" />
+              <text x="16" y="23" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">i</text>
+            </svg>
+          </div>
+          <div style="flex-grow: 1; font-size: 11px; line-height: 14px; color: #000000;">
+            <h3 style="font-size: 12px; font-weight: bold; margin: 0 0 4px 0;">Tebak Negara 98</h3>
+            <p style="margin: 0 0 6px 0; color: #555;">Versi 1.0 (Build 19980725)</p>
+            <p style="margin: 0 0 8px 0;">
+              Game tebak bendera negara dengan visual retro Windows 98 yang autentik.<br>
+              Dibuat dengan HTML5, kustom CSS, dan JS murni. Menggunakan Web Audio API untuk beeps klasik.
+            </p>
+            <p style="color: #666; font-size: 9px; margin: 0;">Copyright &copy; 1998 Antigravity Corp.</p>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: center; margin-top: 8px;">
+          <button class="btn-98" style="width: 100px;" onclick="resetToSetup()">OK</button>
+        </div>
+      </div>
+
+      <!-- Game Over Screen Area (Integrated Screen Panel) -->
+      <div id="gameover-screen" style="display: none; flex-direction: column; gap: 8px; width: 100%;">
+        <div class="score-input-container win-inset" style="background: #ffffff; padding: 12px; display: flex; flex-direction: column; gap: 6px; box-sizing: border-box;">
+          <p style="font-size: 14px; font-weight: bold; margin: 0 0 4px 0; color: #c00; text-align: center;">GAMES OVER!</p>
+          <p style="margin: 0; font-size: 11px; text-align: center;">Skor Akhir Anda: <span id="gameover-final-score" style="font-weight: bold; color: #000080;">0</span></p>
+          <p style="margin: 6px 0 2px 0; font-size: 11px;">Masukkan nama Anda untuk Papan Skor:</p>
+          <input type="text" id="player-name-input" class="win-inset" style="padding: 4px 6px; font-size: 12px; background: #ffffff; color: #000000; width: 100%; box-sizing: border-box;" maxlength="15" value="Player 1">
+        </div>
+        <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; width: 100%;">
+          <button class="btn-98" onclick="submitHighScore()">OK</button>
+          <button class="btn-98" onclick="closeGameOverDialog()">Batal</button>
+        </div>
+      </div>
     </div>
 
     <!-- Window Status Bar -->
@@ -251,94 +323,6 @@
     </div>
   </div>
 
-
-  <!-- GAME OVER DIALOG -->
-  <div class="window win-outset" id="gameover-window" style="display: none;">
-    <div class="title-bar" id="gameover-titlebar">
-      <div class="title-bar-text">Game Over</div>
-      <div class="title-bar-controls">
-        <button class="win-btn win-btn-close" onclick="closeGameOverDialog()">X</button>
-      </div>
-    </div>
-    <div class="window-body">
-      <div class="score-input-container win-inset">
-        <p style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #c00;">GAMES OVER!</p>
-        <p style="margin-bottom: 10px; font-size: 11px;">Skor Akhir Anda: <span id="gameover-final-score"
-            style="font-weight: bold;">0</span></p>
-        <p style="margin-bottom: 5px;">Masukkan nama Anda untuk Papan Skor:</p>
-        <input type="text" id="player-name-input" class="score-input-field win-inset" maxlength="15" value="Player 1">
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
-        <button class="btn-98" onclick="submitHighScore()">OK</button>
-        <button class="btn-98" onclick="closeGameOverDialog()">Batal</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- HIGH SCORE DIALOG -->
-  <div class="window win-outset" id="highscore-window" style="display: none;">
-    <div class="title-bar" id="highscore-titlebar">
-      <div class="title-bar-text">High Scores</div>
-      <div class="title-bar-controls">
-        <button class="win-btn win-btn-close" onclick="closeWindow('highscore-window')">X</button>
-      </div>
-    </div>
-    <div class="window-body">
-      <div style="max-height: 200px; overflow-y: auto;" class="win-inset">
-        <table class="score-table" id="highscore-table">
-          <thead>
-            <tr>
-              <th>Rank</th>
-              <th>Nama</th>
-              <th>Skor</th>
-              <th>Streak</th>
-            </tr>
-          </thead>
-          <tbody id="highscore-body">
-            <!-- Dynamically populated -->
-          </tbody>
-        </table>
-      </div>
-      <div style="display: flex; justify-content: space-between; margin-top: 8px;">
-        <button class="btn-98" onclick="clearHighscores()">Reset Papan</button>
-        <button class="btn-98" onclick="closeWindow('highscore-window')">Tutup</button>
-      </div>
-    </div>
-  </div>
-
-
-  <!-- ABOUT DIALOG -->
-  <div class="window win-outset" id="about-window" style="display: none;">
-    <div class="title-bar" id="about-titlebar">
-      <div class="title-bar-text">About Tebak Negara 98</div>
-      <div class="title-bar-controls">
-        <button class="win-btn win-btn-close" onclick="closeWindow('about-window')">X</button>
-      </div>
-    </div>
-    <div class="window-body" style="display: flex; gap: 10px; padding: 12px;">
-      <div style="width: 48px; height: 48px;">
-        <!-- Retro Info Question SVG -->
-        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" fill="#000080" stroke="#000" stroke-width="1.5" />
-          <text x="16" y="23" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#ffffff"
-            text-anchor="middle">i</text>
-        </svg>
-      </div>
-      <div style="flex-grow: 1;">
-        <h3 style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Tebak Negara 98</h3>
-        <p style="margin-bottom: 10px; color: #555;">Versi 1.0 (Build 19980725)</p>
-        <p style="margin-bottom: 12px; line-height: 14px;">
-          Game tebak bendera dengan visual retro Windows 98 yang autentik.<br>
-          Dibuat dengan HTML5, CSS Kustom, dan JS murni. Menggunakan Web Audio API untuk beeps klasik.
-        </p>
-        <p style="color: #666; font-size: 10px;">Copyright &copy; 1998 Antigravity Corp.</p>
-        <div style="text-align: right; margin-top: 15px;">
-          <button class="btn-98" style="width: 60px;" onclick="closeWindow('about-window')">OK</button>
-        </div>
-      </div>
-    </div>
-  </div>
 
 
   <!-- RETRO HINT ASSISTANT (CLIPPY) -->
@@ -480,6 +464,39 @@
       </div>
     </div>
   </div>
+
+  <!-- CUSTOM RETRO DIALOG BOX -->
+  <div class="window win-outset" id="custom-dialog-window" style="display: none; position: fixed; z-index: 9999 !important; width: 280px; left: 50%; top: 40%; transform: translate(-50%, -50%); flex-direction: column;">
+    <div class="title-bar" id="custom-dialog-titlebar">
+      <div class="title-bar-text" id="custom-dialog-title">Tebak Negara</div>
+      <div class="title-bar-controls">
+        <button class="win-btn win-btn-close" onclick="closeCustomDialog()">X</button>
+      </div>
+    </div>
+    <div class="window-body" style="display: flex; flex-direction: column; gap: 12px; padding: 12px;">
+      <div style="display: flex; gap: 12px; align-items: center;">
+        <div id="custom-dialog-icon-box" style="width: 32px; height: 32px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">
+          <!-- SVG Icon warning or question -->
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" id="custom-dialog-icon-warning" style="width: 32px; height: 32px;">
+            <polygon points="16,2 30,28 2,28" fill="#f39c12" stroke="#000" stroke-width="1.5" />
+            <text x="16" y="24" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="#000" text-anchor="middle">!</text>
+          </svg>
+          <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" id="custom-dialog-icon-question" style="width: 32px; height: 32px; display: none;">
+            <circle cx="16" cy="16" r="14" fill="#000080" stroke="#000" stroke-width="1.5" />
+            <text x="16" y="23" font-family="Georgia, serif" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">?</text>
+          </svg>
+        </div>
+        <div style="flex-grow: 1; font-size: 11px; line-height: 14px; color: #000000;" id="custom-dialog-message">
+          Message text goes here...
+        </div>
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px;" id="custom-dialog-buttons">
+        <button class="btn-98" style="min-width: 60px;" onclick="closeCustomDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+  <!-- Overlay cover for modal blocking -->
+  <div id="custom-dialog-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.1); z-index: 9998; pointer-events: auto;"></div>
 
   <script src="app.js"></script>
 </body>
