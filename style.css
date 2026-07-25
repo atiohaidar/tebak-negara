@@ -35,18 +35,7 @@ body, html {
 
 /* Desktop Grid and Icons */
 .desktop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: calc(100vh - 40px); /* 40px is taskbar height */
-  padding: 10px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 75px);
-  grid-template-rows: repeat(auto-fill, 75px);
-  grid-auto-flow: column;
-  gap: 15px;
-  z-index: 1;
+  display: none !important;
 }
 
 .desktop-icon {
@@ -111,9 +100,23 @@ body, html {
 
 /* Custom window instances */
 #game-window {
-  width: 420px;
-  top: 50px;
-  left: calc(50vw - 210px);
+  width: 100% !important;
+  height: calc(100vh - 40px) !important;
+  top: 0 !important;
+  left: 0 !important;
+  transform: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+#game-window .window-body {
+  max-width: 480px;
+  margin: 0 auto !important;
+  width: 100%;
+}
+
+#game-window .title-bar-controls {
+  display: none !important;
 }
 
 #about-window, #highscore-window, #settings-window {
@@ -222,7 +225,7 @@ body, html {
   box-shadow: inset 1px 1px 0px #dfdfdf, 2px 2px 5px rgba(0,0,0,0.3);
 }
 
-.menu-item:hover .dropdown-menu {
+.menu-item.open .dropdown-menu {
   display: block;
 }
 
@@ -252,6 +255,7 @@ body, html {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex-grow: 1;
 }
 
 /* Classic Client Area Frame */
@@ -414,11 +418,7 @@ body, html {
 }
 
 .clippy-avatar {
-  width: 70px;
-  height: 70px;
-  cursor: pointer;
-  pointer-events: auto;
-  position: relative;
+  display: none !important; /* Hide mascot eyes */
 }
 
 .clippy-avatar svg {
@@ -728,4 +728,139 @@ body, html {
 
 .clippy-avatar.wiggle {
   animation: clippy-wiggle 0.5s ease-in-out;
+}
+
+/* RESPONSIVE FULLSCREEN MOBILE ADAPTATIONS */
+@media (max-width: 600px) {
+  /* Hide desktop icons to save space and center game focus */
+  .desktop {
+    display: none !important;
+  }
+
+  /* Force maximize game window */
+  #game-window.window {
+    width: 100% !important;
+    height: calc(100vh - 40px) !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Hide minimize/maximize buttons as screen is locked maximized */
+  #game-window .title-bar-controls .win-btn:not(.win-btn-close) {
+    display: none !important;
+  }
+
+  /* Responsive layout scaling for mobile screens */
+  .window-body {
+    padding: 6px !important;
+    gap: 6px !important;
+    height: calc(100vh - 75px) !important; /* Adjust body to fit exact height */
+    justify-content: space-between !important;
+  }
+
+  .game-info {
+    margin-bottom: 4px !important;
+    gap: 4px !important;
+  }
+
+  .info-box {
+    font-size: 10px !important;
+    padding: 2px !important;
+  }
+
+  .flag-container {
+    height: 110px !important; /* Compact flag display */
+    margin-bottom: 6px !important;
+  }
+
+  .flag-image {
+    max-width: 95% !important;
+    max-height: 95% !important;
+  }
+
+  .options-grid {
+    grid-template-columns: 1fr 1fr !important; /* Touch-friendly 2x2 grid */
+    gap: 6px !important;
+    margin-bottom: 4px !important;
+  }
+
+  .btn-option {
+    height: 44px !important; /* Thumb-friendly touch targets */
+    font-size: 11px !important;
+    padding: 2px !important;
+  }
+  
+  #typing-container {
+    padding: 6px !important;
+    margin-bottom: 4px !important;
+  }
+  
+  #country-input {
+    font-size: 11px !important;
+    padding: 3px 4px !important;
+  }
+
+  /* Reposition Clippy dynamically above the taskbar */
+  .clippy-container {
+    bottom: 45px !important;
+    right: 10px !important;
+    scale: 0.8 !important; /* Scale Clippy down to prevent blocking */
+  }
+
+  .clippy-bubble {
+    max-width: 140px !important;
+    padding: 6px 10px !important;
+  }
+
+  /* Taskbar mobile fixes */
+  .taskbar {
+    height: 40px !important;
+  }
+
+  /* Hide task items to maximize clock tray and start button spacing */
+  .taskbar-items {
+    display: none !important;
+  }
+
+  /* Dialogs adjustments (About, High Scores, Game Over) */
+  #about-window, #highscore-window, #gameover-window {
+    width: 92% !important;
+    left: 4% !important;
+    top: 50px !important;
+    transform: none !important;
+  }
+
+  .score-input-container {
+    padding: 6px !important;
+  }
+}
+
+/* Win98 Legend and Fieldset styling for Setup Screen Group Boxes */
+.win-fieldset {
+  border: 2px solid !important;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow) !important;
+  padding: 8px 10px !important;
+  margin: 0 !important;
+  display: block;
+}
+
+.win-fieldset legend {
+  font-size: 11px;
+  font-weight: bold;
+  color: #000000;
+  padding: 0 4px;
+  background-color: var(--win-bg);
+}
+
+/* Windows 98 Setup Toggle buttons pressed states */
+.setup-toggle-btn.active {
+  background-color: #d2d2d2 !important;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow) !important;
+  box-shadow: inset 1px 1px 0px var(--win-dark) !important;
+  font-weight: bold;
+  color: #000080 !important; /* Authentic dark blue active color selection */
+  outline: 1px dotted #808080 !important;
 }

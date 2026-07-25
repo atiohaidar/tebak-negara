@@ -257,7 +257,8 @@ const gameState = {
   askedForHint: false,
   difficulty: "normal", // "normal" or "expert"
   hintsLeft: 3, // Max 3 hints per game
-  inputMode: "choice" // "choice" or "typing"
+  inputMode: "choice", // "choice" or "typing"
+  questionType: "country" // "country" (tebak negara) or "capital" (tebak ibukota)
 };
 
 // DIFFICULTY CONTROLLER
@@ -288,6 +289,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupWindowDragging();
   setupZIndexControl();
   setupClock();
+  setupClickMenus(); // Bind click-toggle behavior for dropdown menus
   
   // Close buttons bindings
   document.querySelectorAll(".win-btn-close").forEach(btn => {
@@ -331,6 +333,7 @@ function startNewGame() {
 
   // UI state resetting
   document.getElementById("start-screen").style.display = "none";
+  document.getElementById("game-area").style.display = "flex";
   document.getElementById("flag-img").style.display = "block";
   
   transitionInputUI();
@@ -402,8 +405,16 @@ function nextQuestion() {
   choices.forEach(country => {
     const btn = document.createElement("button");
     btn.className = "btn-98 btn-option";
-    // Win98 mix: indonesian name main, english translation sub text for clarity
-    btn.innerHTML = `${country.indName}<br><span style="font-size: 9px; font-weight: normal; color: #555;">(${country.engName})</span>`;
+    btn.dataset.code = country.code; // Bind code to dataset for robust correct-answer check
+    
+    if (gameState.questionType === "capital") {
+      // Capital mode displays capital cities on the buttons
+      btn.innerHTML = country.capital;
+    } else {
+      // Country mode displays standard name
+      btn.innerHTML = `${country.indName}<br><span style="font-size: 9px; font-weight: normal; color: #555;">(${country.engName})</span>`;
+    }
+    
     btn.onclick = () => selectOption(country.code, btn);
     options.appendChild(btn);
   });
@@ -441,8 +452,8 @@ function selectOption(countryCode, buttonElement) {
     
     document.getElementById("status-left").textContent = `Benar! +${scoreGain} poin`;
     
-    // Level Up every 5 correct answers in a row
-    if (gameState.streak > 0 && gameState.streak % 5 === 0) {
+    // Level Up every 3 correct answers in a row (refills assistant hint easier!)
+    if (gameState.streak > 0 && gameState.streak % 3 === 0) {
       gameState.level++;
       
       // Bonus hint on level up (max 3)
@@ -466,9 +477,9 @@ function selectOption(countryCode, buttonElement) {
     buttonElement.classList.add("btn-wrong");
     AudioSynth.playWrong();
     
-    // Show correct button as hint
+    // Show correct button as hint using dataset.code matching (handles both country and capital text)
     optionButtons.forEach(btn => {
-      if (btn.textContent.includes(gameState.activeCountry.indName)) {
+      if (btn.dataset.code === targetCode) {
         btn.classList.add("btn-correct");
       }
     });
@@ -476,7 +487,11 @@ function selectOption(countryCode, buttonElement) {
     gameState.lives--;
     gameState.streak = 0;
     
-    document.getElementById("status-left").textContent = `Salah! Jawaban: ${gameState.activeCountry.indName}`;
+    if (gameState.questionType === "capital") {
+      document.getElementById("status-left").textContent = `Salah! Ibu kota: ${gameState.activeCountry.capital} (${gameState.activeCountry.indName})`;
+    } else {
+      document.getElementById("status-left").textContent = `Salah! Jawaban: ${gameState.activeCountry.indName}`;
+    }
     
     setTimeout(() => {
       updateGameUI();
@@ -523,21 +538,27 @@ function handleTimeout() {
   updateGameUI(); // Disable hint button immediately
   AudioSynth.playWrong();
   
-  // Highlight correct country in Choice mode
+  // Highlight correct country in Choice mode using dataset.code matching
   if (gameState.inputMode === "choice") {
     const optionButtons = document.querySelectorAll(".btn-option");
     optionButtons.forEach(btn => {
-      if (btn.textContent.includes(gameState.activeCountry.indName)) {
+      if (btn.dataset.code === gameState.activeCountry.code) {
         btn.classList.add("btn-correct");
       } else {
         btn.disabled = true;
       }
     });
   } else {
-    // Show correct answer in Text box
+    // Show correct answer in Text box based on question type
     const textInput = document.getElementById("country-input");
     textInput.disabled = true;
-    textInput.value = `${gameState.activeCountry.indName} (${gameState.activeCountry.engName})`;
+    
+    if (gameState.questionType === "capital") {
+      textInput.value = `${gameState.activeCountry.capital} (${gameState.activeCountry.indName})`;
+    } else {
+      textInput.value = `${gameState.activeCountry.indName} (${gameState.activeCountry.engName})`;
+    }
+    
     textInput.style.backgroundColor = "#f5c6cb";
     textInput.style.borderColor = "red";
     document.getElementById("submit-typing-btn").disabled = true;
@@ -597,19 +618,10 @@ function triggerGameOver() {
   document.getElementById("dialog-overlay").style.display = "block";
   document.getElementById("gameover-window").style.display = "flex";
   document.getElementById("gameover-final-score").textContent = gameState.score;
-  
   bringToFront(document.getElementById("gameover-window"));
   
-  // Show Start Screen in game window
-  document.getElementById("start-screen").style.display = "block";
-  document.getElementById("flag-img").style.display = "none";
-  document.getElementById("options-container").innerHTML = `
-    <button class="btn-98 btn-option" disabled>?</button>
-    <button class="btn-98 btn-option" disabled>?</button>
-    <button class="btn-98 btn-option" disabled>?</button>
-    <button class="btn-98 btn-option" disabled>?</button>
-  `;
-  document.getElementById("clippy-hint-btn").setAttribute("disabled", "true");
+  // Reset screen back to Setup
+  resetToSetup();
 }
 
 function submitHighScore() {
@@ -746,19 +758,36 @@ function getHintFromClippy() {
   const hintType = Math.floor(Math.random() * 4);
   let hintMsg = "";
   
-  switch(hintType) {
-    case 0:
-      hintMsg = `Psst! Negara ini beribu kota di <b>${country.capital}</b>. Gampang kan?`;
-      break;
-    case 1:
-      hintMsg = `Aku cek di peta, negara ini berlokasi di benua <b>${country.continent}</b>!`;
-      break;
-    case 2:
-      hintMsg = `Huruf pertama nama negaranya adalah <b>'${country.indName.charAt(0)}'</b>.`;
-      break;
-    default:
-      hintMsg = `Namanya terdiri dari <b>${country.indName.replace(/\s+/g, '').length} huruf</b>. Jangan sampai salah klik ya!`;
-      break;
+  if (gameState.questionType === "capital") {
+    switch(hintType) {
+      case 0:
+        hintMsg = `Negara pemilik bendera ini adalah <b>${country.indName}</b>!`;
+        break;
+      case 1:
+        hintMsg = `Negara ini berlokasi di benua <b>${country.continent}</b>!`;
+        break;
+      case 2:
+        hintMsg = `Nama ibu kotanya berawalan huruf <b>'${country.capital.charAt(0)}'</b>.`;
+        break;
+      default:
+        hintMsg = `Ibu kota ini memiliki nama sepanjang <b>${country.capital.replace(/\s+/g, '').length} huruf</b>.`;
+        break;
+    }
+  } else {
+    switch(hintType) {
+      case 0:
+        hintMsg = `Psst! Negara ini beribu kota di <b>${country.capital}</b>. Gampang kan?`;
+        break;
+      case 1:
+        hintMsg = `Aku cek di peta, negara ini berlokasi di benua <b>${country.continent}</b>!`;
+        break;
+      case 2:
+        hintMsg = `Huruf pertama nama negaranya adalah <b>'${country.indName.charAt(0)}'</b>.`;
+        break;
+      default:
+        hintMsg = `Namanya terdiri dari <b>${country.indName.replace(/\s+/g, '').length} huruf</b>. Jangan sampai salah klik ya!`;
+        break;
+    }
   }
   
   text.innerHTML = hintMsg;
@@ -776,6 +805,7 @@ function setupWindowDragging() {
   const windows = document.querySelectorAll(".window");
   
   windows.forEach(win => {
+    if (win.id === "game-window") return; // Ignore main game window (since it is maximized fullscreen)
     const titleBar = win.querySelector(".title-bar");
     if (!titleBar) return;
     
@@ -921,7 +951,7 @@ function toggleMinimizeFromTaskbar(id) {
 
 // HELP POPUP
 function showHelp() {
-  alert("Petunjuk Permainan Tebak Negara:\n\n1. Sebuah bendera akan ditampilkan pada layar.\n2. Pilih satu dari 4 opsi jawaban di bawahnya.\n3. Anda memiliki waktu terbatas pada setiap giliran.\n4. Kesalahan menjawab mengurangi nyawa (total 3 nyawa).\n5. Setiap 5 jawaban berurutan yang benar (streak) menaikkan Level permainan.\n6. Klik tombol 'Tanya Asisten' jika bingung!");
+  alert("Petunjuk Permainan Tebak Negara:\n\n1. Sebuah bendera akan ditampilkan pada layar.\n2. Pilih satu dari 4 opsi jawaban di bawahnya.\n3. Anda memiliki waktu terbatas pada setiap giliran.\n4. Kesalahan menjawab mengurangi nyawa (total 3 nyawa).\n5. Setiap 3 jawaban berurutan yang benar (streak) menaikkan Level permainan dan menambah jatah bantuan.\n6. Klik tombol 'Tanya Asisten' jika bingung!");
 }
 
 // UTILITIES
@@ -1025,6 +1055,12 @@ function transitionInputUI() {
   const typingContainer = document.getElementById("typing-container");
   const textInput = document.getElementById("country-input");
   const submitBtn = document.getElementById("submit-typing-btn");
+  const labelInput = document.querySelector("label[for='country-input']");
+  
+  // Update label based on question type
+  if (labelInput) {
+    labelInput.textContent = gameState.questionType === "capital" ? "Tulis Nama Ibu Kota:" : "Tulis Nama Negara:";
+  }
   
   if (gameState.inputMode === "choice") {
     choiceContainer.style.display = "grid";
@@ -1068,7 +1104,11 @@ function submitTypingAnswer() {
   submitBtn.disabled = true;
   
   const targetCountry = gameState.activeCountry;
-  const isCorrect = isAnswerSimilar(typedAnswer, targetCountry);
+  
+  // Decide verification engine based on question type
+  const isCorrect = gameState.questionType === "capital" 
+    ? isCapitalAnswerSimilar(typedAnswer, targetCountry)
+    : isAnswerSimilar(typedAnswer, targetCountry);
   
   if (isCorrect) {
     // Correct
@@ -1082,8 +1122,8 @@ function submitTypingAnswer() {
     
     document.getElementById("status-left").textContent = `Benar! +${scoreGain} poin`;
     
-    // Level Up every 5 correct answers in a row
-    if (gameState.streak > 0 && gameState.streak % 5 === 0) {
+    // Level Up every 3 correct answers in a row (refills assistant hint easier!)
+    if (gameState.streak > 0 && gameState.streak % 3 === 0) {
       gameState.level++;
       
       // Bonus hint on level up (max 3)
@@ -1113,10 +1153,13 @@ function submitTypingAnswer() {
     gameState.lives--;
     gameState.streak = 0;
     
-    document.getElementById("status-left").textContent = `Salah! Jawaban: ${targetCountry.indName} (${targetCountry.engName})`;
-    
-    // Reveal correct answer in input field
-    textInput.value = `${targetCountry.indName} (${targetCountry.engName})`;
+    if (gameState.questionType === "capital") {
+      document.getElementById("status-left").textContent = `Salah! Ibu kota: ${targetCountry.capital} (${targetCountry.indName})`;
+      textInput.value = `${targetCountry.capital} (${targetCountry.indName})`;
+    } else {
+      document.getElementById("status-left").textContent = `Salah! Jawaban: ${targetCountry.indName} (${targetCountry.engName})`;
+      textInput.value = `${targetCountry.indName} (${targetCountry.engName})`;
+    }
     
     setTimeout(() => {
       textInput.style.backgroundColor = "#ffffff";
@@ -1203,4 +1246,197 @@ function isAnswerSimilar(typedStr, countryObj) {
   }
   
   return false;
+}
+
+// QUESTION TYPE CONTROLLER (Tebak Negara vs Tebak Ibu Kota)
+function setQuestionType(type) {
+  gameState.questionType = type;
+  AudioSynth.beep(700, 0.05);
+  
+  const countryMenu = document.getElementById("menu-qtype-country");
+  const capitalMenu = document.getElementById("menu-qtype-capital");
+  
+  if (type === "country") {
+    countryMenu.textContent = "✓ Tebak Negara";
+    capitalMenu.textContent = "   Tebak Ibu Kota";
+  } else {
+    countryMenu.textContent = "   Tebak Negara";
+    capitalMenu.textContent = "✓ Tebak Ibu Kota";
+  }
+  
+  document.getElementById("status-left").textContent = `Tipe pertanyaan diubah ke ${type === 'country' ? 'TEBAK NEGARA' : 'TEBAK IBU KOTA'}!`;
+  
+  // Transition UI labels
+  transitionInputUI();
+  
+  // Start new game to apply changes
+  startNewGame();
+}
+
+// FUZZY MATCH COMPILER FOR CAPITAL CITIES
+function isCapitalAnswerSimilar(typedStr, countryObj) {
+  const clean = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+  const cleanTyped = clean(typedStr);
+  
+  if (!cleanTyped) return false;
+  
+  const cleanTarget = clean(countryObj.capital);
+  
+  // 1. Exact match
+  if (cleanTyped === cleanTarget) return true;
+  
+  // 2. Custom aliases map for popular or complex capital city names
+  const capitalAliases = {
+    "washington, d.c.": ["washington", "washington dc", "dc"],
+    "bandar seri begawan": ["bandar seri begawan", "bsb", "brunei", "brunei city"],
+    "sri jayawardenepura kotte": ["kotte", "sri jayawardenepura", "colombo", "kolombo"],
+    "santiago": ["santiago", "santiago de chile"],
+    "mexico city": ["meksiko", "mexico", "mexico df", "ciudad de mexico"],
+    "kuala lumpur": ["kl", "kuala lumpur"],
+    "singapura": ["singapura", "singapore"]
+  };
+  
+  const targetLower = countryObj.capital.toLowerCase();
+  if (capitalAliases[targetLower]) {
+    for (const alias of capitalAliases[targetLower]) {
+      if (cleanTyped === clean(alias)) return true;
+    }
+  }
+  
+  // 3. Levenshtein check (strict threshold for capitals since names are usually shorter)
+  if (cleanTyped.length >= 4 && cleanTarget.length >= 4) {
+    const distance = getLevenshteinDistance(cleanTyped, cleanTarget);
+    const maxAllowed = Math.min(2, Math.floor(Math.max(cleanTyped.length, cleanTarget.length) / 5));
+    if (distance <= maxAllowed) {
+      return true;
+    }
+  }
+  
+  return false;
+}
+
+// CLICK-BASED DROPDOWN MENUS (Windows 98 Style & Mobile Touch Friendly)
+function setupClickMenus() {
+  const menuItems = document.querySelectorAll(".menu-item");
+  
+  menuItems.forEach(item => {
+    // Open/Toggle menu on click
+    item.addEventListener("click", (e) => {
+      e.stopPropagation(); // Prevent document click from immediately closing
+      AudioSynth.beep(600, 0.03);
+      
+      const isOpen = item.classList.contains("open");
+      
+      // Close all first
+      menuItems.forEach(m => m.classList.remove("open"));
+      
+      if (!isOpen) {
+        item.classList.add("open");
+      }
+    });
+    
+    // Desktop Hover-switching behavior:
+    // If a menu is already open, hovering over another menu item switches the active open menu
+    item.addEventListener("mouseenter", () => {
+      const anyMenuOpen = Array.from(menuItems).some(m => m.classList.contains("open"));
+      if (anyMenuOpen) {
+        menuItems.forEach(m => m.classList.remove("open"));
+        item.classList.add("open");
+      }
+    });
+  });
+  
+  // Click outside to close menus
+  document.addEventListener("click", () => {
+    menuItems.forEach(item => item.classList.remove("open"));
+  });
+  
+  // Clicking items inside dropdown closes it
+  const dropdownItems = document.querySelectorAll(".dropdown-item");
+  dropdownItems.forEach(di => {
+    di.addEventListener("click", () => {
+      menuItems.forEach(item => item.classList.remove("open"));
+    });
+  });
+}
+
+// SETUP WIZARD GAME CONTROLLER
+function startNewGameFromSetup() {
+  // Read values from active toggle buttons
+  const diffVal = document.querySelector('.setup-option-group[data-group="diff"] .active').dataset.value;
+  gameState.difficulty = diffVal;
+
+  const modeVal = document.querySelector('.setup-option-group[data-group="mode"] .active').dataset.value;
+  gameState.inputMode = modeVal;
+
+  const qtypeVal = document.querySelector('.setup-option-group[data-group="qtype"] .active').dataset.value;
+  gameState.questionType = qtypeVal;
+
+  // Hide setup screen, show game area
+  document.getElementById("start-screen").style.display = "none";
+  document.getElementById("game-area").style.display = "flex";
+  
+  // Start game
+  startNewGame();
+}
+
+// SETUP SCREEN OPTION SELECTOR (Click toggles for mobile touch ease)
+function selectSetupOption(group, value, element) {
+  AudioSynth.beep(600, 0.05);
+  
+  const container = element.parentElement;
+  const buttons = container.querySelectorAll('.setup-toggle-btn');
+  
+  buttons.forEach(btn => btn.classList.remove('active'));
+  element.classList.add('active');
+  
+  // Update description text dynamically
+  if (group === 'diff') {
+    const desc = document.getElementById('setup-diff-desc');
+    if (value === 'normal') {
+      desc.textContent = "Normal: Pengecoh acak dari seluruh dunia, waktu menjawab 15 detik.";
+    } else {
+      desc.textContent = "Expert: Pengecoh satu benua, waktu 10s-5s, asisten denda skor -20.";
+    }
+  } else if (group === 'mode') {
+    const desc = document.getElementById('setup-mode-desc');
+    if (value === 'choice') {
+      desc.textContent = "Pilihan Ganda: Menebak dengan memilih salah satu dari 4 tombol opsi.";
+    } else {
+      desc.textContent = "Tebak Ketik: Mengetik jawaban langsung di kotak input (toleransi typo).";
+    }
+  } else if (group === 'qtype') {
+    const desc = document.getElementById('setup-qtype-desc');
+    if (value === 'country') {
+      desc.textContent = "Tebak Negara: Menebak nama negara berdasarkan benderanya.";
+    } else {
+      desc.textContent = "Tebak Ibu Kota: Menebak nama ibu kota negara berdasarkan benderanya.";
+    }
+  }
+}
+
+function resetToSetup() {
+  clearInterval(gameState.timerInterval);
+  gameState.answered = false;
+  gameState.activeCountry = null;
+  
+  // Show setup form, hide game board
+  document.getElementById("start-screen").style.display = "flex";
+  document.getElementById("game-area").style.display = "none";
+  
+  // Clean choice buttons
+  document.getElementById("options-container").innerHTML = `
+    <button class="btn-98 btn-option" disabled>?</button>
+    <button class="btn-98 btn-option" disabled>?</button>
+    <button class="btn-98 btn-option" disabled>?</button>
+    <button class="btn-98 btn-option" disabled>?</button>
+  `;
+  document.getElementById("clippy-hint-btn").setAttribute("disabled", "true");
+  
+  // Reset HUD elements back to defaults
+  document.getElementById("status-time").textContent = "Timer: --";
+  document.getElementById("status-streak").textContent = "Streak: 0";
+  document.getElementById("info-score").textContent = "Score: 0";
+  document.getElementById("info-level").textContent = "Level: 1";
+  document.getElementById("lives-display").textContent = "❤❤❤";
 }
