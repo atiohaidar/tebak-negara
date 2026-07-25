@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Tebak Negara 98 - Sebuah game tebak bendera negara dengan antarmuka retro Windows 98 yang klasik.">
+  <title>Tebak Negara 98</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Retro Desktop Icons -->
+  <div class="desktop" id="desktop">
+    <div class="desktop-icon" id="icon-my-computer" onclick="selectDesktopIcon(this)">
+      <!-- Classic My Computer SVG Icon -->
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="2" width="28" height="20" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <rect x="4" y="4" width="24" height="16" fill="#000080"/>
+        <path d="M12 22 L8 28 L24 28 L20 22 Z" fill="#808080" stroke="#000" stroke-width="1.5"/>
+        <rect x="6" y="28" width="20" height="2" fill="#c0c0c0" stroke="#000" stroke-width="1"/>
+      </svg>
+      <span>My Computer</span>
+    </div>
+
+    <div class="desktop-icon" id="icon-network" onclick="selectDesktopIcon(this)">
+      <!-- Classic Network Neighborhood SVG Icon -->
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="4" width="12" height="10" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <rect x="18" y="4" width="12" height="10" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <rect x="10" y="16" width="12" height="10" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <path d="M8 14 L8 28 L24 28 L24 26 L16 26 L16 14 Z" fill="none" stroke="#808080" stroke-width="2"/>
+        <line x1="24" y1="14" x2="24" y2="16" stroke="#808080" stroke-width="2" />
+      </svg>
+      <span>Network Neighborhood</span>
+    </div>
+
+    <div class="desktop-icon" id="icon-recycle" onclick="selectDesktopIcon(this)">
+      <!-- Classic Recycle Bin SVG Icon -->
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <rect x="6" y="8" width="20" height="20" rx="2" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <line x1="4" y1="8" x2="28" y2="8" stroke="#000" stroke-width="2"/>
+        <rect x="12" y="4" width="8" height="4" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+        <path d="M10 12 L12 24 M16 12 L16 24 M20 12 L18 24" stroke="#808080" stroke-width="1.5"/>
+      </svg>
+      <span>Recycle Bin</span>
+    </div>
+
+    <div class="desktop-icon selected" id="icon-game" ondblclick="openWindow('game-window')" onclick="selectDesktopIcon(this)">
+      <!-- Flag/Globe Icon representing Tebak Negara -->
+      <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="12" fill="#000080" stroke="#000" stroke-width="1.5"/>
+        <path d="M16 4 A12 12 0 0 0 16 28 A12 12 0 0 0 16 4" fill="none" stroke="#fff" stroke-width="1"/>
+        <path d="M4 16 A12 12 0 0 0 28 16 A12 12 0 0 0 4 16" fill="none" stroke="#fff" stroke-width="1"/>
+        <ellipse cx="16" cy="16" rx="6" ry="12" fill="none" stroke="#fff" stroke-width="1"/>
+        <ellipse cx="16" cy="16" rx="12" ry="5" fill="none" stroke="#fff" stroke-width="1"/>
+        <!-- Mini pixelated flag overlay -->
+        <rect x="17" y="6" width="10" height="7" fill="#ff0000" stroke="#000" stroke-width="1"/>
+        <rect x="17" y="9" width="10" height="4" fill="#ffffff"/>
+      </svg>
+      <span>Tebak Negara 98</span>
+    </div>
+  </div>
+
+  <!-- Shield for Dialog focus -->
+  <div class="dialog-overlay" id="dialog-overlay"></div>
+
+  <!-- GAME WINDOW -->
+  <div class="window win-outset" id="game-window">
+    <div class="title-bar" id="game-window-titlebar">
+      <div class="title-bar-text">
+        <svg width="16" height="16" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="12" fill="#000080" stroke="#fff" stroke-width="1"/>
+          <ellipse cx="16" cy="16" rx="6" ry="12" fill="none" stroke="#fff" stroke-width="1"/>
+        </svg>
+        Tebak Negara 98
+      </div>
+      <div class="title-bar-controls">
+        <button class="win-btn" onclick="minimizeWindow('game-window')">_</button>
+        <button class="win-btn" style="font-size:10px;" disabled>&#9633;</button>
+        <button class="win-btn win-btn-close" onclick="closeWindow('game-window')">X</button>
+      </div>
+    </div>
+
+    <!-- Menu Bar -->
+    <div class="menu-bar">
+      <div class="menu-item">
+        Game
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item" onclick="startNewGame()">New Game</a>
+          <a href="#" class="dropdown-item" onclick="openWindow('highscore-window')">High Scores</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" onclick="setDifficulty('normal')" id="menu-diff-normal">✓ Normal Mode</a>
+          <a href="#" class="dropdown-item" onclick="setDifficulty('expert')" id="menu-diff-expert">Expert Mode</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" onclick="setInputMode('choice')" id="menu-mode-choice">✓ Pilihan Ganda</a>
+          <a href="#" class="dropdown-item" onclick="setInputMode('typing')" id="menu-mode-typing">Tebak Ketik</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" onclick="setQuestionType('country')" id="menu-qtype-country">✓ Tebak Negara</a>
+          <a href="#" class="dropdown-item" onclick="setQuestionType('capital')" id="menu-qtype-capital">Tebak Ibu Kota</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" onclick="toggleMute()" id="menu-mute-btn">Mute Sounds</a>
+          <div class="dropdown-divider"></div>
+          <a href="#" class="dropdown-item" onclick="closeWindow('game-window')">Exit</a>
+        </div>
+      </div>
+      <div class="menu-item">
+        Help
+        <div class="dropdown-menu">
+          <a href="#" class="dropdown-item" onclick="showHelp()">How to Play</a>
+          <a href="#" class="dropdown-item" onclick="openWindow('about-window')">About Tebak Negara</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Window Body -->
+    <div class="window-body">
+      <!-- Game Info Display -->
+      <div class="game-info">
+        <div class="info-box win-inset" id="info-score">Score: 0</div>
+        <div class="info-box win-inset" id="info-level">Level: 1</div>
+        <div class="info-box win-inset" id="info-lives">
+          Lives: <span class="lives-container" id="lives-display">❤❤❤</span>
+        </div>
+      </div>
+
+      <!-- Country Flag Container (Sunken Frame) -->
+      <div class="flag-container win-inset" id="flag-box">
+        <!-- Start screen before game starts -->
+        <div id="start-screen" style="text-align: center; color: white;">
+          <h2 style="font-size: 16px; margin-bottom: 10px; font-weight: bold;">Tebak Negara v1.0</h2>
+          <p style="margin-bottom: 15px; font-size: 11px;">Tebak bendera negara dengan benar!<br>Kamu punya 3 nyawa.</p>
+          <button class="btn-98" onclick="startNewGame()" style="font-size: 12px; font-weight: bold; width: 120px;">Mulai Game</button>
+        </div>
+        
+        <!-- Active Flag Image -->
+        <img src="" alt="Flag" class="flag-image" id="flag-img" style="display: none;">
+      </div>
+
+      <!-- Choice Selection Grid -->
+      <div class="options-grid" id="options-container">
+        <button class="btn-98 btn-option" disabled>?</button>
+        <button class="btn-98 btn-option" disabled>?</button>
+        <button class="btn-98 btn-option" disabled>?</button>
+        <button class="btn-98 btn-option" disabled>?</button>
+      </div>
+
+      <!-- Typing Input Area (Tebak Ketik) -->
+      <div class="win-inset" id="typing-container" style="display: none; padding: 10px; width: 100%; background: #ffffff; margin-bottom: 8px; flex-direction: column; gap: 6px;">
+        <label for="country-input" style="font-weight: bold; font-size: 11px;">Tulis Nama Negara:</label>
+        <div style="display: flex; gap: 6px; width: 100%;">
+          <input type="text" id="country-input" class="win-inset" style="flex-grow: 1; padding: 4px 6px; font-size: 12px; background: #ffffff; color: #000000;" placeholder="Ketik jawaban di sini..." autocomplete="off">
+          <button class="btn-98" id="submit-typing-btn" onclick="submitTypingAnswer()" style="min-width: 60px;">Kirim</button>
+        </div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+        <button class="btn-98" id="clippy-hint-btn" onclick="triggerClippyHint()" disabled style="min-width: 100px;">
+          Tanya Asisten
+        </button>
+        <div class="sound-toggle-container" onclick="toggleMuteCheckbox()">
+          <input type="checkbox" id="sound-checkbox" class="sound-toggle-checkbox" checked onclick="event.stopPropagation(); toggleMute();">
+          <span>Enable Audio Beep</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Window Status Bar -->
+    <div class="status-bar">
+      <div class="status-bar-field win-inset" id="status-left">Ready</div>
+      <div class="status-bar-field win-inset" id="status-streak">Streak: 0</div>
+      <div class="status-bar-field win-inset" id="status-time" style="flex-basis: 90px; text-align: center;">Timer: --</div>
+    </div>
+  </div>
+
+
+  <!-- GAME OVER DIALOG -->
+  <div class="window win-outset" id="gameover-window" style="display: none;">
+    <div class="title-bar" id="gameover-titlebar">
+      <div class="title-bar-text">Game Over</div>
+      <div class="title-bar-controls">
+        <button class="win-btn win-btn-close" onclick="closeGameOverDialog()">X</button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div class="score-input-container win-inset">
+        <p style="font-size: 13px; font-weight: bold; margin-bottom: 8px; color: #c00;">GAMES OVER!</p>
+        <p style="margin-bottom: 10px; font-size: 11px;">Skor Akhir Anda: <span id="gameover-final-score" style="font-weight: bold;">0</span></p>
+        <p style="margin-bottom: 5px;">Masukkan nama Anda untuk Papan Skor:</p>
+        <input type="text" id="player-name-input" class="score-input-field win-inset" maxlength="15" value="Player 1">
+      </div>
+      <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px;">
+        <button class="btn-98" onclick="submitHighScore()">OK</button>
+        <button class="btn-98" onclick="closeGameOverDialog()">Batal</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- HIGH SCORE DIALOG -->
+  <div class="window win-outset" id="highscore-window" style="display: none;">
+    <div class="title-bar" id="highscore-titlebar">
+      <div class="title-bar-text">High Scores</div>
+      <div class="title-bar-controls">
+        <button class="win-btn win-btn-close" onclick="closeWindow('highscore-window')">X</button>
+      </div>
+    </div>
+    <div class="window-body">
+      <div style="max-height: 200px; overflow-y: auto;" class="win-inset">
+        <table class="score-table" id="highscore-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Nama</th>
+              <th>Skor</th>
+              <th>Streak</th>
+            </tr>
+          </thead>
+          <tbody id="highscore-body">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
+      </div>
+      <div style="display: flex; justify-content: space-between; margin-top: 8px;">
+        <button class="btn-98" onclick="clearHighscores()">Reset Papan</button>
+        <button class="btn-98" onclick="closeWindow('highscore-window')">Tutup</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ABOUT DIALOG -->
+  <div class="window win-outset" id="about-window" style="display: none;">
+    <div class="title-bar" id="about-titlebar">
+      <div class="title-bar-text">About Tebak Negara 98</div>
+      <div class="title-bar-controls">
+        <button class="win-btn win-btn-close" onclick="closeWindow('about-window')">X</button>
+      </div>
+    </div>
+    <div class="window-body" style="display: flex; gap: 10px; padding: 12px;">
+      <div style="width: 48px; height: 48px;">
+        <!-- Retro Info Question SVG -->
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="16" cy="16" r="14" fill="#000080" stroke="#000" stroke-width="1.5"/>
+          <text x="16" y="23" font-family="Georgia, serif" font-size="22" font-weight="bold" fill="#ffffff" text-anchor="middle">i</text>
+        </svg>
+      </div>
+      <div style="flex-grow: 1;">
+        <h3 style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Tebak Negara 98</h3>
+        <p style="margin-bottom: 10px; color: #555;">Versi 1.0 (Build 19980725)</p>
+        <p style="margin-bottom: 12px; line-height: 14px;">
+          Game tebak bendera dengan visual retro Windows 98 yang autentik.<br>
+          Dibuat dengan HTML5, CSS Kustom, dan JS murni. Menggunakan Web Audio API untuk beeps klasik.
+        </p>
+        <p style="color: #666; font-size: 10px;">Copyright &copy; 1998 Antigravity Corp.</p>
+        <div style="text-align: right; margin-top: 15px;">
+          <button class="btn-98" style="width: 60px;" onclick="closeWindow('about-window')">OK</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- RETRO HINT ASSISTANT (CLIPPY) -->
+  <div class="clippy-container" id="clippy-container">
+    <div class="clippy-bubble" id="clippy-bubble">
+      <div class="clippy-text" id="clippy-text">Halo! Aku Asisten Asisten-mu. Butuh bantuan untuk menebak bendera ini?</div>
+      <div class="clippy-actions">
+        <button class="clippy-btn" onclick="getHintFromClippy()">Ya, butuh!</button>
+        <button class="clippy-btn" onclick="hideClippyBubble()">Tidak, tks.</button>
+      </div>
+    </div>
+    
+    <div class="clippy-avatar" id="clippy-avatar" onclick="toggleClippySpeech()" title="Klik untuk tips!">
+      <!-- Custom animated Paperclip (Clippy) SVG representation -->
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <!-- Paperclip metal wire curves -->
+        <path d="M50,85 C25,85 15,65 15,45 C15,25 30,10 50,10 C70,10 82,25 82,45 C82,65 68,80 50,80 C36,80 25,70 25,52 C25,38 35,26 50,26 C62,26 70,35 70,47 C70,58 62,65 52,65 C44,65 38,59 38,50 L38,45" 
+              fill="none" stroke="#7f8c8d" stroke-width="7" stroke-linecap="round" />
+        <path d="M50,85 C25,85 15,65 15,45 C15,25 30,10 50,10 C70,10 82,25 82,45 C82,65 68,80 50,80 C36,80 25,70 25,52 C25,38 35,26 50,26 C62,26 70,35 70,47 C70,58 62,65 52,65 C44,65 38,59 38,50 L38,45" 
+              fill="none" stroke="#bdc3c7" stroke-width="4" stroke-linecap="round" />
+        
+        <!-- Animated Eyes -->
+        <!-- Left eye white and pupil -->
+        <ellipse cx="44" cy="40" rx="9" ry="12" fill="#fff" stroke="#000" stroke-width="2"/>
+        <circle cx="44" cy="40" r="4" fill="#000"/>
+        
+        <!-- Right eye white and pupil -->
+        <ellipse cx="62" cy="38" rx="9" ry="12" fill="#fff" stroke="#000" stroke-width="2"/>
+        <circle cx="60" cy="38" r="4" fill="#000"/>
+        
+        <!-- Eyebrows (expressive) -->
+        <path d="M36,26 Q44,23 48,29" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+        <path d="M56,23 Q63,22 69,27" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round"/>
+        
+        <!-- Cheek blush -->
+        <ellipse cx="38" cy="52" rx="4" ry="2" fill="#f39c12" opacity="0.5"/>
+        <ellipse cx="66" cy="48" rx="4" ry="2" fill="#f39c12" opacity="0.5"/>
+      </svg>
+    </div>
+  </div>
+
+
+  <!-- TASKBAR / STARTBAR -->
+  <div class="taskbar">
+    <div class="taskbar-left">
+      <button class="btn-98 start-btn" onclick="toggleStartMenu()">
+        <!-- Windows 98 styled flag SVG -->
+        <svg viewBox="0 0 32 32" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+          <g transform="translate(2, 2) scale(0.85)">
+            <!-- Red waving quadrant -->
+            <path d="M2,4 Q8,1 14,4 L14,14 Q8,11 2,14 Z" fill="#ff0000" stroke="#000" stroke-width="1.5"/>
+            <!-- Green waving quadrant -->
+            <path d="M14,4 Q20,7 26,4 L26,14 Q20,17 14,14 Z" fill="#00cc00" stroke="#000" stroke-width="1.5"/>
+            <!-- Blue waving quadrant -->
+            <path d="M2,14 Q8,11 14,14 L14,24 Q8,21 2,24 Z" fill="#0000ff" stroke="#000" stroke-width="1.5"/>
+            <!-- Yellow waving quadrant -->
+            <path d="M14,14 Q20,17 26,14 L26,24 Q20,27 14,24 Z" fill="#ffff00" stroke="#000" stroke-width="1.5"/>
+            <!-- Flag pole -->
+            <rect x="0" y="2" width="2" height="28" fill="#808080" stroke="#000" stroke-width="1"/>
+          </g>
+        </svg>
+        <span>Start</span>
+      </button>
+
+      <!-- Active Application Button representation -->
+      <div class="taskbar-items">
+        <div class="task-item active win-outset" id="taskbar-game-btn" onclick="toggleMinimizeFromTaskbar('game-window')">
+          <svg width="14" height="14" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle;">
+            <circle cx="16" cy="16" r="12" fill="#000080"/>
+          </svg>
+          <span style="margin-left: 3px;">Tebak Negara 98</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Systray/Clock -->
+    <div class="systray win-inset">
+      <!-- Mute/Sound icon -->
+      <div class="systray-icon" id="systray-sound-icon" onclick="toggleMute()" style="cursor: pointer;" title="Klik untuk mute/unmute">
+        <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 10 H12 L20 4 V28 L12 22 H6 Z" fill="#000"/>
+          <!-- Sound wave bars -->
+          <path d="M24 10 Q28 16 24 22" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" id="sound-wave-1"/>
+          <path d="M27 7 Q33 16 27 25" fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" id="sound-wave-2"/>
+        </svg>
+      </div>
+      <!-- Time Display -->
+      <div class="clock" id="systray-clock">12:00 PM</div>
+    </div>
+  </div>
+
+
+  <!-- START MENU POP-UP -->
+  <div class="start-menu" id="start-menu">
+    <div class="start-menu-container">
+      <div class="start-menu-sidebar">
+        Windows 98
+      </div>
+      <div class="start-menu-items">
+        <a class="start-menu-item" onclick="startNewGame(); toggleStartMenu();">
+          <svg viewBox="0 0 32 32" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <polygon points="6,4 26,16 6,28" fill="#008000" stroke="#000" stroke-width="1.5"/>
+          </svg>
+          <span>Mulai Game Baru</span>
+        </a>
+        <a class="start-menu-item" onclick="openWindow('highscore-window'); toggleStartMenu();">
+          <svg viewBox="0 0 32 32" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="24" height="24" rx="2" fill="#e0e0e0" stroke="#000" stroke-width="1.5"/>
+            <line x1="8" y1="10" x2="24" y2="10" stroke="#ff0000" stroke-width="2"/>
+            <line x1="8" y1="16" x2="20" y2="16" stroke="#000" stroke-width="2"/>
+            <line x1="8" y1="22" x2="16" y2="22" stroke="#000" stroke-width="2"/>
+          </svg>
+          <span>Papan Skor</span>
+        </a>
+        <a class="start-menu-item" onclick="openWindow('about-window'); toggleStartMenu();">
+          <svg viewBox="0 0 32 32" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="12" fill="#000080" stroke="#000" stroke-width="1.5"/>
+            <text x="16" y="22" fill="#fff" font-family="serif" font-size="16" font-weight="bold" text-anchor="middle">i</text>
+          </svg>
+          <span>Tentang Game</span>
+        </a>
+        <div class="start-menu-divider"></div>
+        <a class="start-menu-item" onclick="closeWindow('game-window'); toggleStartMenu();">
+          <svg viewBox="0 0 32 32" width="16" height="16" xmlns="http://www.w3.org/2000/svg">
+            <rect x="6" y="6" width="20" height="20" rx="3" fill="#c0c0c0" stroke="#000" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="6" fill="#ff0000" stroke="#000" stroke-width="1.5"/>
+          </svg>
+          <span>Keluar Game</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

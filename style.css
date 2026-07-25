@@ -1,0 +1,731 @@
+/* Custom Windows 98 Bevel & Theme Stylesheet */
+:root {
+  --desktop-color: #008080; /* Classic Teal */
+  --win-bg: #c0c0c0;       /* Classic Grey */
+  --win-shadow: #808080;   /* Dark Grey */
+  --win-light: #ffffff;    /* White */
+  --win-dark: #0a0a0a;     /* Near Black */
+  --win-blue-start: #000080; /* Active Title Bar Start */
+  --win-blue-end: #1084d0;   /* Active Title Bar End */
+  --win-grey-start: #808080; /* Inactive Title Bar Start */
+  --win-grey-end: #c0c0c0;   /* Inactive Title Bar End */
+  --text-color: #000000;
+  --font-family: "MS Sans Serif", "Tahoma", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family);
+  font-size: 11px; /* Win98 standard small text size */
+  -webkit-font-smoothing: none;
+  -moz-osx-font-smoothing: none;
+}
+
+body, html {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--desktop-color);
+  color: var(--text-color);
+  user-select: none;
+  image-rendering: pixelated;
+}
+
+/* Desktop Grid and Icons */
+.desktop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: calc(100vh - 40px); /* 40px is taskbar height */
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 75px);
+  grid-template-rows: repeat(auto-fill, 75px);
+  grid-auto-flow: column;
+  gap: 15px;
+  z-index: 1;
+}
+
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 75px;
+  height: 75px;
+  text-align: center;
+  cursor: pointer;
+  color: white;
+}
+
+.desktop-icon img, .desktop-icon svg {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 4px;
+}
+
+.desktop-icon span {
+  font-size: 11px;
+  line-height: 12px;
+  padding: 2px 4px;
+  word-break: break-word;
+  text-shadow: 1px 1px 1px #000;
+  border: 1px solid transparent;
+}
+
+.desktop-icon:hover span {
+  background-color: rgba(0, 0, 128, 0.5);
+  border: 1px dotted #ffffe0;
+}
+
+.desktop-icon.selected span {
+  background-color: #000080;
+  border: 1px dotted #ffffe0;
+  text-shadow: none;
+}
+
+/* Window Bevel Styling */
+.win-outset {
+  border: 2px solid;
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  box-shadow: inset 1px 1px 0px #dfdfdf, inset -1px -1px 0px var(--win-dark);
+}
+
+.win-inset {
+  border: 2px solid;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  box-shadow: inset 1px 1px 0px var(--win-dark), inset -1px -1px 0px #dfdfdf;
+}
+
+.window {
+  position: absolute;
+  background-color: var(--win-bg);
+  min-width: 250px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Custom window instances */
+#game-window {
+  width: 420px;
+  top: 50px;
+  left: calc(50vw - 210px);
+}
+
+#about-window, #highscore-window, #settings-window {
+  width: 320px;
+  top: 100px;
+  left: calc(50vw - 160px);
+  z-index: 20;
+}
+
+/* Window Titlebar */
+.title-bar {
+  padding: 3px 4px 3px 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: linear-gradient(90deg, var(--win-blue-start), var(--win-blue-end));
+  color: white;
+  font-weight: bold;
+  cursor: move;
+}
+
+.window.inactive .title-bar {
+  background: linear-gradient(90deg, var(--win-grey-start), var(--win-grey-end));
+  color: #dfdfdf;
+}
+
+.title-bar-text {
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.title-bar-text img, .title-bar-text svg {
+  width: 16px;
+  height: 16px;
+}
+
+.title-bar-controls {
+  display: flex;
+  gap: 2px;
+}
+
+/* Window Control Buttons */
+.win-btn {
+  width: 16px;
+  height: 14px;
+  background-color: var(--win-bg);
+  color: var(--text-color);
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  box-shadow: inset 1px 1px 0px #dfdfdf;
+  cursor: pointer;
+}
+
+.win-btn:active {
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  box-shadow: inset 1px 1px 0px var(--win-dark);
+  padding: 1px 0 0 1px;
+}
+
+.win-btn-close {
+  font-size: 9px;
+  font-family: Arial, sans-serif;
+  margin-top: -1px;
+}
+
+/* Menu Bar */
+.menu-bar {
+  display: flex;
+  padding: 2px 4px;
+  gap: 1px;
+  border-bottom: 1px solid var(--win-shadow);
+}
+
+.menu-item {
+  padding: 3px 6px;
+  cursor: pointer;
+  position: relative;
+}
+
+.menu-item::first-letter {
+  text-decoration: underline;
+}
+
+.menu-item:hover {
+  background-color: #000080;
+  color: white;
+}
+
+/* Dropdown Menu styling */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--win-bg);
+  min-width: 120px;
+  z-index: 50;
+  border: 2px solid;
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  box-shadow: inset 1px 1px 0px #dfdfdf, 2px 2px 5px rgba(0,0,0,0.3);
+}
+
+.menu-item:hover .dropdown-menu {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 5px 12px;
+  color: var(--text-color);
+  text-decoration: none;
+  display: block;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background-color: #000080;
+  color: white;
+}
+
+.dropdown-divider {
+  height: 1px;
+  border-bottom: 1px solid var(--win-light);
+  background-color: var(--win-shadow);
+  margin: 3px 1px;
+}
+
+/* Window Content Area */
+.window-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Classic Client Area Frame */
+.client-area {
+  background-color: #ffffff;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 150px;
+}
+
+/* Buttons in Win98 */
+.btn-98 {
+  padding: 6px 12px;
+  background-color: var(--win-bg);
+  border: 2px solid;
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  box-shadow: inset 1px 1px 0px #dfdfdf, inset -1px -1px 0px var(--win-dark);
+  color: black;
+  cursor: pointer;
+  outline: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-width: 75px;
+}
+
+.btn-98:active {
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  box-shadow: inset 1px 1px 0px var(--win-dark), inset -1px -1px 0px #dfdfdf;
+  padding: 7px 11px 5px 13px;
+}
+
+.btn-98:focus {
+  outline: 1px dotted #000;
+  outline-offset: -4px;
+}
+
+.btn-98:disabled {
+  color: var(--win-shadow);
+  text-shadow: 1px 1px 0px var(--win-light);
+  cursor: not-allowed;
+  box-shadow: none;
+  border-color: #dfdfdf;
+}
+
+/* Status Bar */
+.status-bar {
+  display: flex;
+  gap: 3px;
+  padding: 2px;
+  border-top: 1px solid var(--win-shadow);
+}
+
+.status-bar-field {
+  padding: 3px 6px;
+  background-color: var(--win-bg);
+  flex-grow: 1;
+}
+
+.status-bar-field:not(:last-child) {
+  flex-basis: 70px;
+}
+
+/* Game Area Components */
+.flag-container {
+  width: 100%;
+  height: 160px;
+  background-color: #000; /* Sunken dark border container */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.flag-image {
+  max-width: 90%;
+  max-height: 90%;
+  object-fit: contain;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+  border: 1px solid #555;
+  image-rendering: auto; /* Nicer flag rendering */
+}
+
+/* Option Buttons Grid */
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.btn-option {
+  font-size: 12px;
+  font-weight: bold;
+  height: 38px;
+  text-align: center;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+/* Flash feedback animations */
+.btn-correct {
+  animation: flash-correct 0.3s ease-in-out 3 alternate;
+}
+
+.btn-wrong {
+  animation: flash-wrong 0.3s ease-in-out 3 alternate;
+}
+
+@keyframes flash-correct {
+  0%, 100% { background-color: var(--win-bg); color: black; }
+  50% { background-color: #008000; color: white; border-color: green; }
+}
+
+@keyframes flash-wrong {
+  0%, 100% { background-color: var(--win-bg); color: black; }
+  50% { background-color: #800000; color: white; border-color: red; }
+}
+
+/* Info board */
+.game-info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 10px;
+}
+
+.info-box {
+  flex: 1;
+  text-align: center;
+  font-weight: bold;
+  padding: 4px;
+  font-size: 12px;
+  background: #f0f0f0;
+}
+
+.info-box:not(:last-child) {
+  margin-right: 6px;
+}
+
+.lives-container {
+  color: #c00;
+  letter-spacing: 2px;
+}
+
+/* Clippy Assistant Elements */
+.clippy-container {
+  position: absolute;
+  bottom: 60px;
+  right: 20px;
+  display: flex;
+  align-items: flex-end;
+  z-index: 99;
+  pointer-events: none;
+}
+
+.clippy-avatar {
+  width: 70px;
+  height: 70px;
+  cursor: pointer;
+  pointer-events: auto;
+  position: relative;
+}
+
+.clippy-avatar svg {
+  width: 100%;
+  height: 100%;
+}
+
+.clippy-bubble {
+  position: relative;
+  background-color: #ffffe1;
+  border: 1px solid #000000;
+  box-shadow: 2px 2px 0px rgba(0,0,0,0.2);
+  padding: 8px 12px;
+  border-radius: 5px;
+  margin-right: 15px;
+  margin-bottom: 10px;
+  max-width: 180px;
+  pointer-events: auto;
+  display: none;
+}
+
+/* Triangle for speech bubble pointer */
+.clippy-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: 12px;
+  right: -8px;
+  border-width: 8px 0 0 8px;
+  border-style: solid;
+  border-color: transparent #ffffe1;
+  display: block;
+  width: 0;
+}
+
+.clippy-bubble::before {
+  content: "";
+  position: absolute;
+  bottom: 11px;
+  right: -9px;
+  border-width: 9px 0 0 9px;
+  border-style: solid;
+  border-color: transparent #000000;
+  display: block;
+  width: 0;
+  z-index: -1;
+}
+
+.clippy-text {
+  font-size: 11px;
+  line-height: 14px;
+  color: black;
+}
+
+.clippy-actions {
+  margin-top: 5px;
+  display: flex;
+  gap: 5px;
+}
+
+.clippy-btn {
+  background: none;
+  border: none;
+  color: #0000f0;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 10px;
+  padding: 0;
+}
+
+.clippy-btn:hover {
+  color: #ff0000;
+}
+
+/* Taskbar / Startbar at Bottom */
+.taskbar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 40px;
+  background-color: var(--win-bg);
+  padding: 4px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 100;
+  border-top: 2px solid var(--win-light);
+  box-shadow: inset 0px 1px 0px #dfdfdf;
+}
+
+.taskbar-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+}
+
+/* Start Button */
+.start-btn {
+  font-weight: bold;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  height: 100%;
+}
+
+.start-btn img, .start-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Active window taskbar items */
+.taskbar-items {
+  display: flex;
+  gap: 4px;
+  height: 100%;
+}
+
+.task-item {
+  width: 120px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  font-weight: bold;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.task-item.active {
+  background-color: #dfdfdf;
+  border-color: var(--win-shadow) var(--win-light) var(--win-light) var(--win-shadow);
+  box-shadow: inset 1px 1px 0px var(--win-dark), inset -1px -1px 0px #dfdfdf;
+}
+
+.task-item img, .task-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Systray/Clock */
+.systray {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  height: 100%;
+}
+
+.systray-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.clock {
+  font-size: 11px;
+  font-weight: normal;
+}
+
+/* Start Menu Pop-up */
+.start-menu {
+  display: none;
+  position: absolute;
+  bottom: 40px;
+  left: 6px;
+  width: 180px;
+  background-color: var(--win-bg);
+  z-index: 101;
+  border: 2px solid;
+  border-color: var(--win-light) var(--win-shadow) var(--win-shadow) var(--win-light);
+  box-shadow: inset 1px 1px 0px #dfdfdf, 3px 3px 10px rgba(0,0,0,0.4);
+}
+
+.start-menu-sidebar {
+  width: 28px;
+  background: linear-gradient(180deg, #000080, #1084d0);
+  color: white;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 4px;
+  font-weight: bold;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.start-menu-container {
+  display: flex;
+  width: 100%;
+}
+
+.start-menu-items {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.start-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+}
+
+.start-menu-item:hover {
+  background-color: #000080;
+  color: white;
+}
+
+.start-menu-item svg, .start-menu-item img {
+  width: 18px;
+  height: 18px;
+}
+
+.start-menu-divider {
+  height: 1px;
+  background-color: var(--win-shadow);
+  border-bottom: 1px solid var(--win-light);
+  margin: 3px 0;
+}
+
+/* High Score Board Styles */
+.score-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 5px;
+}
+
+.score-table th, .score-table td {
+  text-align: left;
+  padding: 4px 6px;
+  border: 1px solid var(--win-shadow);
+}
+
+.score-table th {
+  background-color: #dfdfdf;
+}
+
+/* Highscore input panel */
+.score-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: #f0f0f0;
+}
+
+.score-input-field {
+  padding: 4px 6px;
+  width: 100%;
+  font-size: 12px;
+  text-align: center;
+}
+
+/* Sound indicator helper label */
+.sound-toggle-container {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.sound-toggle-checkbox {
+  cursor: pointer;
+}
+
+/* Desktop Icon Selection Styling */
+.desktop-icon.selected {
+  outline: 1px dotted #ffffff;
+}
+
+/* Dragging state */
+.dragging {
+  opacity: 0.8;
+}
+
+/* Dialog wrapper centering helper */
+.dialog-overlay {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: transparent; /* Click shield */
+  z-index: 15;
+}
+
+/* Clippy wiggle keyframes */
+@keyframes clippy-wiggle {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-4px) rotate(-3deg); }
+  75% { transform: translateY(-2px) rotate(3deg); }
+}
+
+.clippy-avatar.wiggle {
+  animation: clippy-wiggle 0.5s ease-in-out;
+}
