@@ -258,8 +258,197 @@ const gameState = {
   difficulty: "normal", // "normal" or "expert"
   hintsLeft: 3, // Max 3 hints per game
   inputMode: "choice", // "choice" or "typing"
-  questionType: "country" // "country" (tebak negara) or "capital" (tebak ibukota)
+  questionType: "country", // "country" (tebak negara), "capital" (tebak ibukota), or "clue" (mode detektif clue)
+  currentClueIndex: 1, // 1 to 5 for Mode Detektif Clue
+  clues: [] // 5 generated clue strings for current round
 };
+
+// RICH ACCURATE COUNTRY FACTS DATABASE (For Mode Detektif Clue)
+const COUNTRY_FACTS = {
+  id: { food: "Nasi Goreng, Rendang, & Sate", geo: "Negara kepulauan terbesar di dunia di Asia Tenggara, berbatasan darat dengan Malaysia, PNG, & Timor Leste", landmark: "Candi Borobudur, Danau Toba, & Pulau Komodo" },
+  my: { food: "Nasi Lemak, Laksa, & Teh Tarik", geo: "Asia Tenggara (Semenanjung & Borneo), berbatasan darat dengan Indonesia, Thailand, & Brunei", landmark: "Menara Kembar Petronas & Batu Caves" },
+  sg: { food: "Hainanese Chicken Rice, Chili Crab, & Laksa", geo: "Negara kota pulau di Asia Tenggara di ujung selatan Semenanjung Malaya", landmark: "Patung Merlion, Marina Bay Sands, & Gardens by the Bay" },
+  jp: { food: "Sushi, Ramen, & Tempura", geo: "Negara kepulauan di Asia Timur di Samudra Pasifik", landmark: "Gunung Fuji, Kuil Senso-ji, & Menara Tokyo" },
+  kr: { food: "Kimchi, Tteokbokki, & Samgyeopsal", geo: "Semenanjung Korea bagian selatan di Asia Timur, berbatasan darat dengan Korea Utara", landmark: "Menara N Seoul, Istana Gyeongbokgung, & Pulau Jeju" },
+  cn: { food: "Dim Sum, Bebek Peking, & Mapo Tofu", geo: "Asia Timur, negara terluas di kawasan Asia Timur", landmark: "Tembok Besar Tiongkok (Great Wall) & Kota Terlarang" },
+  th: { food: "Tom Yum Goong, Pad Thai, & Mango Sticky Rice", geo: "Asia Tenggara (Negara Gajah Putih), berbatasan dengan Myanmar, Laos, Kamboja, & Malaysia", landmark: "Kuil Wat Arun & Grand Palace Bangkok" },
+  vn: { food: "Pho (Mie Sapi), Banh Mi, & Kopi Telur", geo: "Asia Tenggara di Semenanjung Indochina, tetangga Tiongkok, Laos, & Kamboja", landmark: "Teluk Ha Long (Ha Long Bay) & Kota Kuno Hoi An" },
+  ph: { food: "Chicken Adobo, Sinigang, & Halo-halo", geo: "Negara kepulauan di Asia Tenggara di Samudra Pasifik", landmark: "Bukit Cokelat (Chocolate Hills) & Teras Sawah Banaue" },
+  in: { food: "Nasi Biryani, Chicken Tikka Masala, & Naan", geo: "Asia Selatan di Semenanjung India, berbatasan dengan Pakistan, Tiongkok, & Nepal", landmark: "Taj Mahal di Agra & Sungai Gangga" },
+  sa: { food: "Nasi Kabsa, Mandi, & Kurma", geo: "Jazirah Arab terbesar di Asia Barat, berbatasan dengan Yordania, Irak, UEA, & Yaman", landmark: "Ka'bah di Kota Suci Makkah & Masjid Nabawi" },
+  tr: { food: "Doner Kebab, Baklava, & Turkish Delight", geo: "Negara Lintas Benua (Asia & Eropa), dipisahkan oleh Selat Bosporus", landmark: "Hagia Sophia, Blue Mosque, & Balon Udara Cappadocia" },
+  ru: { food: "Sup Borscht, Beef Stroganoff, & Blini", geo: "Negara terluas di dunia membentang dari Eropa Timur hingga Asia Utara", landmark: "Kremlin Moskow & Katedral Saint Basil" },
+  us: { food: "Hamburger, Hot Dog, & Apple Pie", geo: "Amerika Utara, berbatasan darat dengan Kanada di utara & Meksiko di selatan", landmark: "Patung Liberty, Grand Canyon, & Gedung Putih" },
+  ca: { food: "Poutine, Sirup Mapel (Maple Syrup), & Butter Tarts", geo: "Amerika Utara, negara terbesar kedua di dunia, berbatasan darat dengan AS", landmark: "Air Terjun Niagara & Taman Nasional Banff" },
+  br: { food: "Feijoada, Pao de Queijo, & Churrasco", geo: "Negara terbesar di Amerika Selatan, memiliki Hutan Hujan Amazon", landmark: "Patung Kristus Penebus di Rio de Janeiro & Pantai Copacabana" },
+  ar: { food: "Asado (Barbekyu), Empanadas, & Dulce de Leche", geo: "Amerika Selatan bagian selatan, berbatasan dengan Chile, Brasil, & Uruguay", landmark: "Air Terjun Iguazu & Daerah Patagonia" },
+  mx: { food: "Tacos, Burritos, & Guacamole", geo: "Amerika Utara, berbatasan darat dengan AS di utara, Guatemala & Belize di selatan", landmark: "Chichen Itza (Piramida Maya) & Zocalo" },
+  gb: { food: "Fish and Chips & Afternoon Tea", geo: "Eropa Barat di Kepulauan Britania, berbatasan darat dengan Irlandia", landmark: "Jam Big Ben, Istana Buckingham, & Stonehenge" },
+  fr: { food: "Croissant, Baguette, & Escargot", geo: "Eropa Barat, berbatasan darat dengan Jerman, Spanyol, Italia, Belgia, & Swiss", landmark: "Menara Eiffel, Museum Louvre, & Istana Versailles" },
+  de: { food: "Bratwurst, Pretzel, & Sauerkraut", geo: "Eropa Tengah, berbatasan dengan 9 negara (termasuk Prancis & Polandia)", landmark: "Gerbang Brandenburg & Kastil Neuschwanstein" },
+  it: { food: "Pizza, Pasta, & Gelato", geo: "Eropa Selatan berbentuk seperti sepatu bot di Laut Mediterania", landmark: "Colosseum Roma, Menara Miring Pisa, & Kanal Venesia" },
+  es: { food: "Paella, Churros, & Tapas", geo: "Semenanjung Iberia di Eropa Barat, berbatasan dengan Portugal & Prancis", landmark: "Sagrada Familia di Barcelona & Istana Alhambra" },
+  nl: { food: "Stroopwafel, Bitterballen, & Keju Gouda", geo: "Eropa Barat, terkenal dengan wilayah di bawah permukaan laut & kincir angin", landmark: "Taman Bunga Keukenhof & Kanal Amsterdam" },
+  ch: { food: "Fondue Keju & Cokelat Swiss", geo: "Eropa Tengah di Pegunungan Alpen, berbatasan dengan Jerman, Prancis, Italia, & Austria", landmark: "Puncak Gunung Matterhorn & Pegunungan Alpen" },
+  se: { food: "Swedish Meatballs (Kottbullar) & Cinnamon Buns", geo: "Semenanjung Skandinavia di Eropa Utara, tetangga Norwegia & Finlandia", landmark: "Museum Vasa & Istana Stockholm" },
+  no: { food: "Rakfisk, Brunost (Keju Cokelat), & Salmon", geo: "Semenanjung Skandinavia di Eropa Utara, terkenal dengan teluk Fjord", landmark: "Geirangerfjord & Aurora Borealis (Cahaya Utara)" },
+  fi: { food: "Karjalanpiirakka (Pai Karelia) & Ruisleipa", geo: "Eropa Utara (Negara Seribu Danau), berbatasan dengan Rusia & Swedia", landmark: "Desa Santa Claus di Rovaniemi Lapland" },
+  dk: { food: "Smorrebrod (Roti Terbuka) & Danish Pastry", geo: "Semenanjung Jutlandia di Eropa Utara, tetangga Jerman & Swedia", landmark: "Patung Little Mermaid & Taman Tivoli Kopenhagen" },
+  be: { food: "Waffle Belgia, Cokelat Belgia, & Frites", geo: "Eropa Barat, markas besar Uni Eropa & NATO, tetangga Prancis, Jerman, & Belanda", landmark: "Atomium Brussels & Grand Place" },
+  pt: { food: "Pastel de Nata (Egg Tart) & Bacalhau", geo: "Semenanjung Iberia paling barat di Eropa, berbatasan langsung dengan Spanyol", landmark: "Menara Belem di Lisabon & Istana Pena Sintra" },
+  gr: { food: "Moussaka, Souvlaki, & Keju Feta", geo: "Eropa Selatan di Laut Mediterania, asal mula Olimpiade & filsafat Barat", landmark: "Parthenon Acropolis Athena & Rumah Putih Santorini" },
+  pl: { food: "Pierogi (Pangsit Polandia) & Kielbasa", geo: "Eropa Tengah, berbatasan dengan Jerman, Ceko, Ukraina, & Laut Baltik", landmark: "Kota Tua Warsawa & Alun-alun Pasar Krakow" },
+  at: { food: "Wiener Schnitzel & Sacher Torte", geo: "Eropa Tengah di Pegunungan Alpen, berbatasan dengan Jerman, Swiss, & Italia", landmark: "Istana Schonbrunn Wina & Desa Hallstatt" },
+  ie: { food: "Irish Stew & Soda Bread", geo: "Pulau Irlandia di Eropa Barat, berbatasan darat dengan Irlandia Utara (UK)", landmark: "Tebing Moher (Cliffs of Moher) & Kastil Blarney" },
+  is: { food: "Hakarl (Hiu Fermentasi) & Skyr", geo: "Negara pulau di Samudra Atlantik Utara, terkenal dengan gunung berapi & gletser", landmark: "Blue Lagoon & Air Terjun Gullfoss" },
+  ua: { food: "Sup Borscht, Varenyky, & Chicken Kyiv", geo: "Eropa Timur, berbatasan dengan Rusia, Polandia, Rumania, & Laut Hitam", landmark: "Katedral Saint Sophia di Kyiv" },
+  eg: { food: "Koshari, Ful Medames, & Falafel", geo: "Afrika Utara, menghubungkan benua Afrika & Asia lewat Semenanjung Sinai", landmark: "Piramida Giza, Patung Sphinx, & Sungai Nil" },
+  za: { food: "Biltong (Dendeng Khas) & Bobotie", geo: "Paling selatan benua Afrika, mengelilingi negara enklave Lesotho", landmark: "Gunung Meja (Table Mountain) Cape Town & Taman Kruger" },
+  ma: { food: "Tajine, Couscous, & Teh Mint Maroko", geo: "Afrika Utara, berjarak sangat dekat dari Spanyol dipisahkan Selat Gibraltar", landmark: "Kota Biru Chefchaouen & Pasar Jemaa el-Fnaa" },
+  ke: { food: "Ugali, Sukuma Wiki, & Nyama Choma", geo: "Afrika Timur di garis Khatulistiwa, berbatasan dengan Tanzania & Somalia", landmark: "Taman Nasional Maasai Mara & Gunung Kenya" },
+  ng: { food: "Jollof Rice, Egusi Soup, & Suya", geo: "Afrika Barat di Teluk Guinea, negara dengan populasi terbesar di Afrika", landmark: "Batu Zuma (Zuma Rock) & Taman Yankari" },
+  gh: { food: "Ghana Jollof, Waakye, & Banku", geo: "Afrika Barat di Teluk Guinea, produsen kakao/cokelat terbesar kedua di dunia", landmark: "Kastil Cape Coast & Jembatan Gantung Kakum" },
+  au: { food: "Meat Pie, Vegemite, & Lamington", geo: "Benua Oseania, dikelilingi Samudra Hindia & Pasifik (Negara Kanguru)", landmark: "Gedung Opera Sydney & Great Barrier Reef" },
+  nz: { food: "Hangi Tradisional, Pavlova, & Domba Panggang", geo: "Negara pulau di Oseania Pasifik Selatan, terdiri dari Pulau Utara & Selatan", landmark: "Desa Hobbiton (Lord of the Rings) & Milford Sound" },
+  ae: { food: "Shawarma, Machboos, & Luqaimat", geo: "Jazirah Arab di Teluk Persia, berbatasan dengan Arab Saudi & Oman", landmark: "Gedung Tertinggi Dunia Burj Khalifa & Masjid Sheikh Zayed" },
+  pk: { food: "Nihari, Biryani, & Seekh Kebab", geo: "Asia Selatan, berbatasan dengan India, Afganistan, Iran, & Tiongkok", landmark: "Masjid Badshahi Lahore & Pegunungan K2" },
+  bd: { food: "Kacchi Biryani & Ikan Hilsa Curry", geo: "Asia Selatan di Teluk Benggala, hampir seluruhnya dikelilingi oleh India", landmark: "Hutan Mangrove Sundarbans (Harimau Benggala)" },
+  ir: { food: "Chelow Kebab, Ghormeh Sabzi, & Nasi Safran", geo: "Asia Barat (Persia Kuno), berbatasan dengan Irak, Turki, & Laut Kaspia", landmark: "Reruntuhan Persepolis & Masjid Nasir al-Mulk" },
+  iq: { food: "Masgoub (Ikan Bakar) & Kleicha", geo: "Asia Barat di kawasan Mesopotamia Kuno di antara Sungai Eufrat & Tigris", landmark: "Reruntuhan Kota Kuno Babilonia & Ziggurat Ur" },
+  kp: { food: "Naengmyeon (Mie Dingin) & Kimchi", geo: "Semenanjung Korea bagian utara di Asia Timur, berbatasan dengan Tiongkok & Korsel", landmark: "Menara Juche & Alun-alun Kim Il-sung Pyongyang" },
+  mn: { food: "Buuz (Pangsit Daging) & Khorkhog", geo: "Asia Timur terkurung daratan di antara Rusia & Tiongkok, terkenal dengan padang rumput Steppa", landmark: "Gurun Gobi & Patung Raksasa Genghis Khan" },
+  np: { food: "Momo (Pangsit Nepal) & Dal Bhat", geo: "Asia Selatan di Pegunungan Himalaya di antara Tiongkok & India", landmark: "Puncak Gunung Everest & Kuil Pashupatinath" },
+  lk: { food: "Kottu Roti, Fish Ambul Thiyal, & Teh Ceylon", geo: "Negara pulau di Samudra Hindia di sebelah selatan India", landmark: "Benteng Batu Sigiriya & Kuil Gigi Suci Kandy" },
+  kh: { food: "Amok Ikan (Fish Amok) & Kuy Teav", geo: "Asia Tenggara di Semenanjung Indochina, tetangga Thailand, Laos, & Vietnam", landmark: "Kompleks Candi Angkor Wat" },
+  la: { food: "Larb (Cincang Daging Asam) & Sticky Rice", geo: "Satu-satunya negara di Asia Tenggara yang terkurung daratan (landlocked)", landmark: "Kuil Pha That Luang & Air Terjun Kuang Si" },
+  mm: { food: "Mohinga (Sup Mie Ikan) & Laphet", geo: "Asia Tenggara di Teluk Benggala, berbatasan dengan Bangladesh, India, Tiongkok, & Thailand", landmark: "Pagoda Shwedagon Yangon & Ribuan Candi Bagan" },
+  bn: { food: "Ambuyat (Olahan Sagu) & Nasi Katok", geo: "Asia Tenggara di Pulau Kalimantan/Borneo, dikelilingi oleh wilayah Malaysia", landmark: "Masjid Sultan Omar Ali Saifuddien & Kampung Ayer" },
+  kz: { food: "Beshbarmak (Daging & Mie) & Kazy", geo: "Negara terkurung daratan terbesar di dunia di Asia Tengah", landmark: "Menara Bayterek di Astana & Charyn Canyon" },
+  va: { food: "Masakan Tradisional Pasta & Espresso", geo: "Negara terkecil di dunia, berada di dalam enklave Kota Roma Italia", landmark: "Basilik Santo Petrus & Kapel Sistina" },
+  mc: { food: "Barbajuan (Puff Pastry) & Stocafi", geo: "Negara mikro di Riviera Prancis Eropa Barat di pesisir Laut Mediterania", landmark: "Kasino Monte Carlo & Formula 1 Grand Prix Monaco" },
+  cz: { food: "Veprove Koleno & Svickova", geo: "Eropa Tengah, berbatasan dengan Jerman, Austria, Polandia, & Slovakia", landmark: "Jembatan Charles & Kastil Praha" },
+  hu: { food: "Goulash (Sup Daging Sapi Daging Asap) & Langos", geo: "Eropa Tengah, dilintasi oleh Sungai Danube", landmark: "Gedung Parlemen Hungaria & Danau Balaton" },
+  ro: { food: "Sarmale (Gulungan Daging Daun Kubis) & Mici", geo: "Eropa Timur di pesisir Laut Hitam, wilayah bersejarah Transylvania", landmark: "Kastil Bran (Kastil Dracula) & Istana Bukares" },
+  hr: { food: "Peka & Crni Rizot (Risol Cumi Hitam)", geo: "Eropa Selatan di pesisir Laut Adriatik, memiliki ribuan pulau cantik", landmark: "Tembok Kota Kuno Dubrovnik & Danau Plitvice" },
+  cu: { food: "Ropa Vieja & Sandwich Kuba", geo: "Negara pulau terbesar di Laut Karibia Amerika Tengah", landmark: "Mobil Klasik Retro & Bangunan Kolonial Habana Vieja" },
+  jm: { food: "Jerk Chicken & Ackee and Saltfish", geo: "Negara pulau di Laut Karibia, tanah kelahiran musik Reggae & Bob Marley", landmark: "Museum Bob Marley & Air Terjun Dunn's River" },
+  bt: { food: "Ema Datshi (Cabai Olahan Keju) & Phaksha Pa", geo: "Asia Selatan di Pegunungan Himalaya, dikenal mengukur kemajuan dengan 'Kebahagiaan Nasional'", landmark: "Biara Paro Taktsang (Tiger's Nest) di Tebing Karang" },
+  mv: { food: "Garudhiya (Sup Ikan) & Bis Keemiya", geo: "Negara kepulauan atol tropis terendah di dunia di Samudra Hindia", landmark: "Resor Bungalow Atas Air & Pantai Pasir Putih" },
+  tl: { food: "Batar Da'an (Jagung Rebus) & Ikan Saboko", geo: "Asia Tenggara di bagian timur Pulau Timor, berbatasan darat dengan Indonesia", landmark: "Patung Cristo Rei Dili & Pulau Atauro" }
+};
+
+// GENERATE 5 PROGRESSIVE CLUES FOR A COUNTRY
+function generateCluesForCountry(country) {
+  const code = country.code.toLowerCase();
+  const facts = COUNTRY_FACTS[code];
+  
+  // Clue 1: Food / Unique Culture Trait
+  let clue1 = (facts && facts.food) 
+    ? `Kuliner Khas: Terkenal dengan masakan khas ${facts.food}.`
+    : `Karakteristik Wilayah: Terletak di benua ${country.continent} dan kaya akan budaya lokalnya.`;
+    
+  // Clue 2: Geography & Bordering Countries / Region
+  let clue2 = (facts && facts.geo)
+    ? `Geografi & Wilayah: ${facts.geo}.`
+    : `Geografi: Berlokasi strategis di kawasan ${country.continent} dengan pesona geografisnya.`;
+    
+  // Clue 3: Famous Landmark / Unique Culture
+  let clue3 = (facts && facts.landmark)
+    ? `Landmark & Budaya: Tempat terkenal ${facts.landmark}.`
+    : `Keunikan: Negara di ${country.continent} dengan arsitektur & tradisi sejarah yang khas.`;
+    
+  // Clue 4: Capital City & Name Structure
+  const charLength = country.indName.replace(/\s+/g, '').length;
+  let clue4 = `Ibu Kota & Nama: Beribu kota di '${country.capital}', nama diawali huruf '${country.indName.charAt(0)}' (${charLength} huruf).`;
+  
+  // Clue 5: Full Flag Reveal
+  let clue5 = `Bendera Resmi: Gambar bendera negara ini telah terbuka penuh di atas!`;
+  
+  return [clue1, clue2, clue3, clue4, clue5];
+}
+
+// UNLOCK NEXT CLUE (MODE DETEKTIF CLUE)
+function unlockNextClue() {
+  if (gameState.answered || gameState.questionType !== "clue") return;
+  if (gameState.currentClueIndex >= 5) return;
+  
+  gameState.currentClueIndex++;
+  AudioSynth.beep(750, 0.06);
+  renderClueCards();
+  
+  // If clue 5 is reached, reveal the flag image!
+  if (gameState.currentClueIndex >= 5) {
+    document.getElementById("flag-img").style.display = "block";
+    document.getElementById("flag-locked-overlay").style.display = "none";
+  }
+}
+
+// RENDER CLUE CARDS (MODE DETEKTIF CLUE)
+function renderClueCards() {
+  const container = document.getElementById("clue-cards-list");
+  if (!container || !gameState.clues) return;
+  container.innerHTML = "";
+  
+  const baseScore = 50;
+  const penaltyPerClue = 10;
+  const cluesOpened = gameState.currentClueIndex - 1; // first clue is free
+  const currentScore = baseScore - (cluesOpened * penaltyPerClue);
+  
+  document.getElementById("clue-count-badge").textContent = `${gameState.currentClueIndex}/5`;
+  
+  const scoreEl = document.getElementById("clue-score-multiplier");
+  if (cluesOpened === 0) {
+    scoreEl.textContent = `Skor: ${baseScore} Poin`;
+    scoreEl.style.color = "#008000";
+  } else {
+    scoreEl.textContent = `Skor: ${currentScore} Poin (−${cluesOpened * penaltyPerClue} dari ${baseScore})`;
+    scoreEl.style.color = currentScore <= 20 ? "#c00000" : "#b8860b";
+  }
+  
+  const titles = [
+    "Clue 1: Kuliner & Karakteristik Khas",
+    "Clue 2: Geografi & Negara Tetangga",
+    "Clue 3: Landmark & Keunikan Budaya",
+    "Clue 4: Ibu Kota & Struktur Nama",
+    "Clue 5: Gambar Bendera Terbuka"
+  ];
+  
+  gameState.clues.forEach((clueText, idx) => {
+    const clueNum = idx + 1;
+    const isUnlocked = clueNum <= gameState.currentClueIndex;
+    
+    const card = document.createElement("div");
+    card.className = `clue-card ${isUnlocked ? 'unlocked' : 'locked'}`;
+    
+    const header = document.createElement("div");
+    header.className = "clue-card-header";
+    header.innerHTML = `
+      <span>${titles[idx]}</span>
+      <span class="clue-badge">${isUnlocked ? 'TERBUKA' : 'TERKUNCI'}</span>
+    `;
+    
+    const body = document.createElement("div");
+    body.className = "clue-card-body";
+    body.style.fontWeight = isUnlocked ? "bold" : "normal";
+    body.textContent = isUnlocked ? clueText : "🔒 Clue ini masih terkunci. Klik 'Buka Clue Berikutnya' untuk membuka.";
+    
+    card.appendChild(header);
+    card.appendChild(body);
+    container.appendChild(card);
+  });
+  
+  const unlockBtn = document.getElementById("unlock-clue-btn");
+  if (unlockBtn) {
+    if (gameState.currentClueIndex >= 5 || gameState.answered) {
+      unlockBtn.disabled = true;
+      unlockBtn.textContent = "Semua Clue Terbuka — Bendera Terlihat!";
+    } else {
+      const nextScore = currentScore - penaltyPerClue;
+      unlockBtn.disabled = false;
+      unlockBtn.textContent = `🔓 Buka Clue ${gameState.currentClueIndex + 1} (Skor: ${currentScore} → ${nextScore} Poin, -${penaltyPerClue})`;
+    }
+  }
+}
 
 // DIFFICULTY CONTROLLER
 function setDifficulty(mode) {
@@ -330,11 +519,11 @@ function startNewGame() {
   gameState.hintsLeft = 3; // Reset hints to 3
   gameState.answered = false;
   gameState.askedForHint = false;
+  gameState.currentClueIndex = 1;
 
   // UI state resetting
   document.getElementById("start-screen").style.display = "none";
   document.getElementById("game-area").style.display = "flex";
-  document.getElementById("flag-img").style.display = "block";
   
   transitionInputUI();
   updateGameUI();
@@ -354,6 +543,7 @@ function nextQuestion() {
   
   gameState.answered = false;
   gameState.askedForHint = false;
+  gameState.currentClueIndex = 1;
   setSmileyFace("🙂"); // Reset Minesweeper smiley back to normal
   transitionInputUI();
   updateGameUI(); // Sync HUD state
@@ -362,21 +552,54 @@ function nextQuestion() {
   const options = document.getElementById("options-container");
   options.innerHTML = "";
   
-  // Select active country
+  // Select active country (Expert Mode prioritizes rare/hard flags, Normal Mode scales with level)
   const prevCountry = gameState.activeCountry;
+  const commonCountries = COUNTRY_DATABASE.slice(0, 85);
+  const rareCountries = COUNTRY_DATABASE.slice(85);
+  
+  let pool = COUNTRY_DATABASE;
+  if (gameState.difficulty === "expert") {
+    // Expert Mode: 85% chance to draw from obscure/rare countries
+    pool = Math.random() < 0.85 ? rareCountries : COUNTRY_DATABASE;
+  } else {
+    // Normal Mode: Level 1-2 uses common flags, level 3-5 mixes 75% common, level 6+ full database
+    if (gameState.level <= 2) {
+      pool = commonCountries;
+    } else if (gameState.level <= 5) {
+      pool = Math.random() < 0.75 ? commonCountries : rareCountries;
+    }
+  }
+  
   let targetCountry;
+  let attempts = 0;
   do {
-    targetCountry = COUNTRY_DATABASE[Math.floor(Math.random() * COUNTRY_DATABASE.length)];
-  } while (prevCountry && targetCountry.code === prevCountry.code);
+    targetCountry = pool[Math.floor(Math.random() * pool.length)];
+    attempts++;
+  } while (prevCountry && targetCountry.code === prevCountry.code && attempts < 20);
   
   gameState.activeCountry = targetCountry;
+  gameState.clues = generateCluesForCountry(targetCountry);
   
   // Load flag image using jsdelivr (using SVG from the flag-icons library for better reliability)
   const flagImg = document.getElementById("flag-img");
   flagImg.src = `https://cdn.jsdelivr.net/npm/flag-icons/flags/4x3/${targetCountry.code}.svg`;
   
+  const flagOverlay = document.getElementById("flag-locked-overlay");
+  const clueContainer = document.getElementById("clue-mode-container");
+  
+  if (gameState.questionType === "clue") {
+    clueContainer.style.display = "flex";
+    flagImg.style.display = "none";
+    flagOverlay.style.display = "flex";
+    renderClueCards();
+  } else {
+    clueContainer.style.display = "none";
+    flagImg.style.display = "block";
+    flagOverlay.style.display = "none";
+  }
+  
   // Update status bar left
-  document.getElementById("status-left").textContent = "Menebak negara...";
+  document.getElementById("status-left").textContent = gameState.questionType === "clue" ? "Detektif Clue: Menebak negara..." : "Menebak negara...";
   
   // Generate option choices (1 correct, 3 distractors)
   const distractors = [];
@@ -449,7 +672,15 @@ function selectOption(countryCode, buttonElement) {
     AudioSynth.playCorrect();
     
     gameState.streak++;
-    const scoreGain = (gameState.level * 10) + (gameState.streak * 2);
+    let basePoints = (gameState.level * 10);
+    if (gameState.questionType === "clue") {
+      const clueScores = { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 };
+      basePoints = clueScores[gameState.currentClueIndex] || 10;
+      // Reveal flag image on correct guess
+      document.getElementById("flag-img").style.display = "block";
+      document.getElementById("flag-locked-overlay").style.display = "none";
+    }
+    const scoreGain = basePoints + (gameState.streak * 2);
     gameState.score += scoreGain;
     
     document.getElementById("status-left").textContent = `Benar! +${scoreGain} poin`;
@@ -510,8 +741,14 @@ function selectOption(countryCode, buttonElement) {
 // TIMER FUNCTIONALITY
 function resetTimer() {
   clearInterval(gameState.timerInterval);
-  // Timer gets shorter as level increases. Expert starts with less time (10s base down to 5s min)
-  if (gameState.difficulty === "expert") {
+  // Mode Detektif Clue gives 20 seconds reading time (down to 12s min). Other modes use standard timer.
+  if (gameState.questionType === "clue") {
+    if (gameState.difficulty === "expert") {
+      gameState.timer = Math.max(10, 16 - gameState.level);
+    } else {
+      gameState.timer = Math.max(12, 21 - gameState.level);
+    }
+  } else if (gameState.difficulty === "expert") {
     gameState.timer = Math.max(5, 11 - gameState.level);
   } else {
     gameState.timer = Math.max(8, 16 - gameState.level);
@@ -1163,7 +1400,15 @@ function submitTypingAnswer() {
     AudioSynth.playCorrect();
     
     gameState.streak++;
-    const scoreGain = (gameState.level * 10) + (gameState.streak * 2);
+    let basePoints = (gameState.level * 10);
+    if (gameState.questionType === "clue") {
+      const clueScores = { 1: 50, 2: 40, 3: 30, 4: 20, 5: 10 };
+      basePoints = clueScores[gameState.currentClueIndex] || 10;
+      // Reveal flag image on correct guess
+      document.getElementById("flag-img").style.display = "block";
+      document.getElementById("flag-locked-overlay").style.display = "none";
+    }
+    const scoreGain = basePoints + (gameState.streak * 2);
     gameState.score += scoreGain;
     
     document.getElementById("status-left").textContent = `Benar! +${scoreGain} poin`;
@@ -1456,8 +1701,10 @@ function selectSetupOption(group, value, element) {
     const desc = document.getElementById('setup-qtype-desc');
     if (value === 'country') {
       desc.textContent = "Tebak Negara: Menebak nama negara berdasarkan benderanya.";
-    } else {
+    } else if (value === 'capital') {
       desc.textContent = "Tebak Ibu Kota: Menebak nama ibu kota negara berdasarkan benderanya.";
+    } else if (value === 'clue') {
+      desc.textContent = "Mode Detektif Clue: Menebak negara berdasarkan 5 fakta kuliner/geografi (Waktu 20 detik, skor -10 per clue).";
     }
   }
 }
@@ -1473,6 +1720,9 @@ function resetToSetup() {
   document.getElementById("highscore-screen").style.display = "none";
   document.getElementById("about-screen").style.display = "none";
   document.getElementById("gameover-screen").style.display = "none";
+  document.getElementById("clue-mode-container").style.display = "none";
+  document.getElementById("flag-locked-overlay").style.display = "none";
+  document.getElementById("flag-img").style.display = "block";
   
   // Clean choice buttons
   document.getElementById("options-container").innerHTML = `
